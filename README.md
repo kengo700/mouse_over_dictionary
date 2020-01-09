@@ -4,6 +4,9 @@
 
 **開発初期段階のアルファ版です。自己責任でご利用ください。不具合報告や改善案をいただけると助かります！**
 
+![DOS2](https://github.com/kengo700/mouse_over_dictionary/blob/images/mod_dos2.png)
+（CRPG[『Divinity: Original Sin 2』](https://store.steampowered.com/app/435150/Divinity_Original_Sin_2__Definitive_Edition/)で使用した様子）
+
 ## 特徴
 
 * マウスオーバーするだけで高速に検索
