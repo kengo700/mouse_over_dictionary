@@ -7,7 +7,7 @@
 ## 特徴
 
 * マウスオーバーするだけで高速に検索
-* あらゆる場面で使える（ゲーム、PDF、Excel、Kindleなど）
+* あらゆる場面で使える（PDF、Excel、Kindleなど）
 * 好きな辞書データをインポート可能
 
 ## インストール
@@ -35,7 +35,7 @@
 
 * [The MIT License (MIT)](LICENSE.txt)
 
-## リファレンス
+## ライブラリ
 
 * [Tesseract](https://github.com/tesseract-ocr/tesseract)
     * 用途：文字認識
@@ -45,7 +45,3 @@
     * 用途：インターフェース構築
     * ライセンス：GNU General Public License v3.0
     * ライセンス全文：[licenses/LICENSE_Qt.txt](licenses/LICENSE_Qt.txt)
-* [REMIX ICON](https://remixicon.com)
-    * 用途：アイコン
-    * ライセンス：Apache License 2.0
-    * ライセンス全文：[licenses/LICENSE_REMIXICON.txt](licenses/LICENSE_REMIXICON.txt)
