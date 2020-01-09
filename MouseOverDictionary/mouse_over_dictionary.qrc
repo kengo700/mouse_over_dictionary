@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/MouseOverDictionary">
+        <file>Resources/chat-4-line.png</file>
+        <file>Resources/chat-off-line.png</file>
+        <file>Resources/push-pin-line.png</file>
+        <file>Resources/push-pin-2-line.png</file>
+        <file>Resources/side-bar-line.png</file>
+        <file>Resources/side-bar-line-hide.png</file>
+    </qresource>
+</RCC>
