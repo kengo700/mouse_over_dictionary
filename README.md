@@ -36,11 +36,11 @@
 
 ## リファレンス
 
-* [Tesseract 4.1](https://github.com/tesseract-ocr/tesseract)
+* [Tesseract](https://github.com/tesseract-ocr/tesseract)
     * 用途：文字認識
     * ライセンス：Apache License 2.0
     * ライセンス全文：[licenses/LICENSE_Tesseract.txt](licenses/LICENSE_Tesseract.txt)
-* [Qt 5.12](https://www.qt.io)
+* [Qt](https://www.qt.io)
     * 用途：インターフェース構築
     * ライセンス：GNU General Public License v3.0
     * ライセンス全文：[licenses/LICENSE_Qt.txt](licenses/LICENSE_Qt.txt)
