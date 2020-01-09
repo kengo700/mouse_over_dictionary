@@ -43,4 +43,4 @@
 * [Qt 5.12](https://www.qt.io)
     * 用途：インターフェース構築
     * ライセンス：GNU General Public License v3.0
-    * ライセンス全文 : [licenses/LICENSE_Qt.txt](licenses/LICENSE_Qt.txt)
+    * ライセンス全文：[licenses/LICENSE_Qt.txt](licenses/LICENSE_Qt.txt)
