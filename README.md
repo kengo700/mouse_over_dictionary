@@ -38,9 +38,9 @@
 
 * [Tesseract 4.1](https://github.com/tesseract-ocr/tesseract)
     * 用途：文字認識
-    * ライセンス：Apache License. Version 2.0
-    * ライセンス全文：[licenses/](licenses/)
+    * ライセンス：Apache License 2.0
+    * ライセンス全文：[licenses/](licenses/LICENSE_Tesseract.txt)
 * [Qt 5.12](https://www.qt.io)
     * 用途：インターフェース構築
-    * ライセンス：LGPL v2.1、v3
-    * ライセンス全文 : [licenses/](licenses/)
+    * ライセンス：GNU General Public License v3.0
+    * ライセンス全文 : [licenses/](licenses/LICENSE_Qt.txt)
