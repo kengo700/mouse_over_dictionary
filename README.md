@@ -13,11 +13,13 @@
 * あらゆる場面で使える（ゲーム、PDF、Excel、Kindleなど）
 * 好きな辞書データをインポート可能
 
-## インストール
+## 使い方
+
+### インストール
 * 下記からダウンロードして解凍
     * [MouseOverDictionary.ver.0.0.1.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.1/MouseOverDictionary.ver.0.0.1.zip)
 
-## 辞書データ
+### 辞書データ
 
 下記の辞書データに対応しています。dictionaryフォルダに入れておくと起動時に読み込みます
 * [ejdic-handテキスト形式（UTF-8）](https://github.com/kujirahand/EJDict)
@@ -29,16 +31,18 @@
 * [PDIC１行テキスト形式（Unicode、Shift-JIS）](http://pdic.la.coocan.jp/unicode/help/OneLineFormat.html)
    * PDICで変換可能
 
-## 動作環境
+## その他
+
+### 動作環境
 
 * Windows 10 64bit
 * 高DPI非対応
 
-## ライセンス
+### ライセンス
 
 * [The MIT License (MIT)](LICENSE.txt)
 
-## ライブラリ
+### ライブラリ
 
 * [Tesseract](https://github.com/tesseract-ocr/tesseract)
     * 用途：文字認識
