@@ -19,6 +19,17 @@
 * 下記からダウンロードして解凍
     * [MouseOverDictionary.ver.0.0.1.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.1/MouseOverDictionary.ver.0.0.1.zip)
 
+### 主な機能
+
+* マウスオーバー辞書引き
+    * 調べたい単語にマウスカーソルを近づけると、自動的に読み取って辞書を引きます
+* マウス追従ウィンドウ
+    * 検索欄の右のアイコン
+    * マウスに追従するウィンドウを表示します
+* 検索履歴
+    * 検索欄の左のアイコン
+    * これまで検索してヒットした単語一覧を表示します
+
 ### 辞書データ
 
 下記の辞書データに対応しています。dictionaryフォルダに入れておくと起動時に読み込みます
