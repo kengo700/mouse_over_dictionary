@@ -61,3 +61,16 @@
     * 用途：インターフェース構築
     * ライセンス：GNU General Public License v3.0
     * ライセンス全文：[licenses/LICENSE_Qt.txt](licenses/LICENSE_Qt.txt)
+
+### リファレンス
+
+* プログラミング
+    * [Stack Overflow - How to make tesseract-ocr read from coordinates on a screen?](https://stackoverflow.com/questions/22924209)
+    * [GitHub - wtetsu - mouse-dictionary](https://github.com/wtetsu/mouse-dictionary)
+    * [GitHub - mrenouf - Plurals.java](https://gist.github.com/mrenouf/805745)
+* 辞書形式
+    * [GitHub - kujirahand - EJDict](https://github.com/kujirahand/EJDict)
+    * [EDP - 英辞郎とは - データ仕様](http://www.eijiro.jp/spec.htm)
+    * [PDIC/Unicode - １行テキスト形式](http://pdic.la.coocan.jp/unicode/help/)
+* アイコン
+    * [REMIX ICON](https://remixicon.com/)
