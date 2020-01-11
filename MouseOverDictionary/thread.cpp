@@ -16,24 +16,31 @@ Thread::~Thread()
 
 void Thread::run()
 {
+	stopped = false;
 	// Tesseract初期化
-	emit mainTextChanged(QString::fromLocal8Bit("文字認識ライブラリ初期化中..."));
+	emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化中..."));
 	if (ocr.Init() == false) {
-		emit mainTextChanged(QString::fromLocal8Bit("文字認識ライブラリ失敗"));
+		emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化失敗"));
 		stopped = true;
+	}
+	else {
+		emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化成功"));
 	}
 
 	// 辞書の読み込み
 	mutex.lock();
-	emit mainTextChanged(QString::fromLocal8Bit("辞書データ読み込み中..."));
+	emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み中..."));
 	if (dict.Load("dictionary") == false) {
-		emit mainTextChanged(QString::fromLocal8Bit("辞書データ読み込み失敗"));
+		emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み失敗"));
 		stopped = true;
-	};
+	}
+	else {
+		emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み成功"));
+	}
 	mutex.unlock();
 
 	if (!stopped) {
-		emit mainTextChanged(QString::fromLocal8Bit("準備完了！"));
+		emit mainTextChanged(QString::fromUtf8(u8"準備完了！"));
 		emit ready(true);
 	}
 
@@ -143,19 +150,19 @@ bool Thread::search(QString word)
 		// 記号を削除
 		std::string temp_word = original_words[i].toStdString();
 		size_t c;
-		while ((c = temp_word.find_first_of(" ,.;:()[]*\"!?")) != std::string::npos) {
+		while ((c = temp_word.find_first_of(u8" ,.;:()[]*\"!?")) != std::string::npos) {
 			temp_word.erase(c, 1);
 		}
 		original_words[i] = QString::fromStdString(temp_word);
 	}
 
 	// 熟語に対応するため、マウスより右にあるワードを順次追加
-	std::string temp_word = "";
+	std::string temp_word = u8"";
 	std::vector<std::string> temp_lookup_words;
 	for (int i = 0; i < original_words.size(); ++i) {
 		temp_word += original_words[i].toStdString();
 		temp_lookup_words.push_back(temp_word);
-		temp_word += " ";
+		temp_word += u8" ";
 	}
 	// 熟語を先に表示するため、逆順にして結合
 	std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -175,12 +182,12 @@ bool Thread::search(QString word)
 	lower_words_count = lower_words.size();
 
 	// 熟語に対応するため、マウスより右にあるワードを順次追加
-	temp_word = "";
+	temp_word = u8"";
 	temp_lookup_words.clear();
 	for (int i = 0; i < lower_words_count; ++i) {
 		temp_word += lower_words[i].toStdString();
 		temp_lookup_words.push_back(temp_word);
-		temp_word += " ";
+		temp_word += u8" ";
 	}
 	// 熟語を先に表示するため、逆順にして結合
 	std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -203,13 +210,13 @@ bool Thread::search(QString word)
 
 	// 熟語に対応するため、マウスより右にあるワードを順次追加
 	if (include_plural) {
-		temp_word = "";
+		temp_word = u8"";
 		temp_lookup_words.clear();
 		for (int i = 0; i < singular_words.size(); ++i) {
 			temp_word += singular_words[i].toStdString();
 			temp_lookup_words.push_back(temp_word);
 			//sub_lookup_words.push_back(temp_word);
-			temp_word += " ";
+			temp_word += u8" ";
 		}
 		// 熟語を先に表示するため、逆順にして結合
 		std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -231,12 +238,12 @@ bool Thread::search(QString word)
 
 		// 熟語に対応するため、マウスより右にあるワードを順次追加
 		if (include_pasttense) {
-			temp_word = "";
+			temp_word = u8"";
 			temp_lookup_words.clear();
 			for (int i = 0; i < presenttense_words.size(); ++i) {
 				temp_word += presenttense_words[i].toStdString();
 				temp_lookup_words.push_back(temp_word);
-				temp_word += " ";
+				temp_word += u8" ";
 			}
 			// 熟語を先に表示するため、逆順にして結合
 			std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -259,12 +266,12 @@ bool Thread::search(QString word)
 
 		// 熟語に対応するため、マウスより右にあるワードを順次追加
 		if (include_participle) {
-			temp_word = "";
+			temp_word = u8"";
 			temp_lookup_words.clear();
 			for (int i = 0; i < infinitive_words.size(); ++i) {
 				temp_word += infinitive_words[i].toStdString();
 				temp_lookup_words.push_back(temp_word);
-				temp_word += " ";
+				temp_word += u8" ";
 			}
 			// 熟語を先に表示するため、逆順にして結合
 			std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -288,12 +295,12 @@ bool Thread::search(QString word)
 
 		// 熟語に対応するため、マウスより右にあるワードを順次追加
 		if (include_pronoun) {
-			temp_word = "";
+			temp_word = u8"";
 			temp_lookup_words.clear();
 			for (int i = 0; i < general_words.size(); ++i) {
 				temp_word += general_words[i].toStdString();
 				temp_lookup_words.push_back(temp_word);
-				temp_word += " ";
+				temp_word += u8" ";
 			}
 			// 熟語を先に表示するため、逆順にして結合
 			std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
@@ -313,8 +320,7 @@ bool Thread::search(QString word)
 			sorted.push_back(*it);
 	}
 	lookup_words = sorted;
-
-
+	
 	// 辞書から検索
 	std::vector<std::string> output_words;
 	std::vector<std::string> output_texts;
@@ -328,7 +334,7 @@ bool Thread::search(QString word)
 			output_texts.push_back(text);
 
 			// 検索履歴に記録する文字列を作るために、検索にヒットしたワード数を記録
-			int word_count = std::count(lookup_word.cbegin(), lookup_word.cend(), ' ') + 1;
+			int word_count = std::count(lookup_word.cbegin(), lookup_word.cend(), u8' ') + 1;
 			if (found_word_count_max < word_count) {
 				found_word_count_max = word_count;
 			}
@@ -341,32 +347,32 @@ bool Thread::search(QString word)
 	}
 
 	// 検索履歴に記録する文字列を作成
-	std::string history_word = "";
+	std::string history_word = u8"";
 	if (found) {
 		for (int i = 0; i < found_word_count_max; ++i) {
 			history_word += original_words[i].toStdString();
 			if (i < found_word_count_max - 1) {
-				history_word += " ";
+				history_word += u8" ";
 			}
 		}
 	}
 
 	// HTML形式に変換
-	std::string html_main = ""; // メインウィンドウ用
-	std::string html_mini = ""; // マウス追従ウィンドウ用
+	std::string html_main = u8""; // メインウィンドウ用
+	std::string html_mini = u8""; // マウス追従ウィンドウ用
 
-	std::string html_head_l = "<span style = \"color:#000088;font-weight:bold;\">";
-	std::string html_head_r = "</span>";
-	std::string html_desc_l = "<span style = \"color:#101010;\">";
-	std::string html_desc_r = "</span>";
-	std::string html_hr = "<hr>";
-	std::string html_br = "<br/>";
+	std::string html_head_l = u8"<span style = \"color:#000088;font-weight:bold;\">";
+	std::string html_head_r = u8"</span>";
+	std::string html_desc_l = u8"<span style = \"color:#101010;\">";
+	std::string html_desc_r = u8"</span>";
+	std::string html_hr = u8"<hr>";
+	std::string html_br = u8"<br/>";
 
 	for (int i = 0; i < output_words.size(); i++) {
 
 		// 「<」「>」を先に変換
-		output_texts[i] = std::regex_replace(output_texts[i], std::regex("\\<"), "&lt;");
-		output_texts[i] = std::regex_replace(output_texts[i], std::regex("\\>"), "&gt;");
+		output_texts[i] = std::regex_replace(output_texts[i], std::regex(u8"\\<"), u8"&lt;");
+		output_texts[i] = std::regex_replace(output_texts[i], std::regex(u8"\\>"), u8"&gt;");
 
 		// 各ワードの間（2つ目以降のワードの上）に横線を入れる
 		if (i > 0) {
@@ -383,22 +389,24 @@ bool Thread::search(QString word)
 
 	// テキストを修飾
 	std::vector<std::vector<std::string>> re_rules = {
-		{"(■.+?$|◆.+?$|・.+?$)","<span style=\"color:#008000;\">$1</span>"},
-		//{"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
-		{"(\\{.+?\\}|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
-		{"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span style=\"color:#008000;\">$1</span>"},
-		{"\\r\\n|\\n|\\r", "<br/>"}
+		//{u8"(■.+?$|◆.+?$|・.+?$)","<span style=\"color:#008000;\">$1</span>"},
+		{u8"(■.+?$|◆.+?$)","<span style=\"color:#008000;\">$1</span>"},
+		//{u8"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
+		{u8"(\\{.+?\\}|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
+		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span style=\"color:#008000;\">$1</span>"},
+		{u8"\\r\\n|\\n|\\r", "<br/>"}
 	};
 	for (auto re_rule : re_rules) {
 		html_main = std::regex_replace(html_main, std::regex(re_rule[0]), re_rule[1]);
 	}
 
 	std::vector<std::vector<std::string>> re_rules_popup = {
-		{"(■.+?$|◆.+?$|・.+?$)",""},
-		//{"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))",""},
-		{"(\\{.+?\\}|\\(.+?\\))",""},
-		{"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)",""},
-		{"\\r\\n|\\n|\\r", "；"}
+		//{u8"(■.+?$|◆.+?$|・.+?$)",""},
+		{u8"(■.+?$|◆.+?$)",""},
+		//{u8"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))",""},
+		{u8"(\\{.+?\\}|\\(.+?\\))",""},
+		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)",""},
+		{u8"\\r\\n|\\n|\\r", "；"}
 	};
 	for (auto re_rule : re_rules_popup) {
 		html_mini = std::regex_replace(html_mini, std::regex(re_rule[0]), re_rule[1]);
@@ -407,8 +415,10 @@ bool Thread::search(QString word)
 	// 結果をシグナル経由で伝達
 	mutex.lock();
 	if (found) {
-		emit mainTextChanged(QString::fromLocal8Bit(html_main.c_str()));
-		emit miniTextChanged(QString::fromLocal8Bit(html_mini.c_str()));
+		//emit mainTextChanged(QString::fromLocal8Bit(html_main.c_str()));
+		//emit miniTextChanged(QString::fromLocal8Bit(html_mini.c_str()));
+		emit mainTextChanged(QString::fromUtf8(html_main.c_str()));
+		emit miniTextChanged(QString::fromUtf8(html_mini.c_str()));
 		emit wordFound(QString::fromStdString(history_word));
 	}
 	mutex.unlock();

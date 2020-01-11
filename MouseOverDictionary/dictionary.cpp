@@ -52,7 +52,8 @@ bool Dictionary::Load(std::string foldername)
 //   ejdic-hand形式について：https://github.com/kujirahand/EJDict
 bool Dictionary::LoadEJDIC(std::string filename)
 {
-	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
 	//   UTF-8のファイルはin.setCodec()で指定しないと文字化けする
@@ -100,7 +101,8 @@ bool Dictionary::LoadEJDIC(std::string filename)
 bool Dictionary::LoadEIJIRO(std::string filename)
 {
 
-	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
 	//   in.setCodec()で指定しなくても、Shift-JISとUnicodeのファイルは正しく読めるっぽい
@@ -124,7 +126,7 @@ bool Dictionary::LoadEIJIRO(std::string filename)
 		}
 
 		// 先頭の「■」を削除
-		items[0].remove(codec->toUnicode("■"));
+		items[0].remove(codec->toUnicode(u8"■"));
 
 		// 品詞ラベルなどを削除
 		QStringList items2 = items[0].split(codec->toUnicode("{"));
@@ -159,7 +161,8 @@ bool Dictionary::LoadEIJIRO(std::string filename)
 //   PDIC1行テキスト形式について：http://pdic.la.coocan.jp/unicode/help/OneLineFormat.html
 bool Dictionary::LoadPDIC1(std::string filename)
 {
-	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+//	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
 	//   in.setCodec()で指定しなくても、Shift-JISとUnicodeのファイルは正しく読めるっぽい
@@ -183,7 +186,7 @@ bool Dictionary::LoadPDIC1(std::string filename)
 		items[1] = items[1].replace(codec->toUnicode(" \\ "), codec->toUnicode("\n"));
 
 		// 訳語と用例の区切りは、辞郎フォーマットに合わせて「■・」に置換しておく（要検討）
-		items[1] = items[1].replace(codec->toUnicode(" / "), codec->toUnicode("■・"));
+		items[1] = items[1].replace(codec->toUnicode(" / "), codec->toUnicode(u8"■・"));
 
 		std::string word = codec->fromUnicode(items[0]).toStdString();
 		std::string text = codec->fromUnicode(items[1]).toStdString();
@@ -214,7 +217,8 @@ bool Dictionary::Find(std::string word, std::string& text)
 enum DictionaryFormat Dictionary::getFormat(std::string filename)
 {
 
-	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
 	//   C++だとUnicodeのファイル読み込みが難しいので、Qtで読み込み
@@ -229,7 +233,7 @@ enum DictionaryFormat Dictionary::getFormat(std::string filename)
 	QString first_line = in.readLine();
 
 	// 1行目に「■」を含む場合は辞郎フォーマットと判断する（要検討）
-	if (first_line.contains(codec->toUnicode("■"))) {
+	if (first_line.contains(codec->toUnicode(u8"■"))) {
 		format = EIJIRO;
 	}
 	// 1行目にタブを含む場合はejdicフォーマットと判断する（要検討）
