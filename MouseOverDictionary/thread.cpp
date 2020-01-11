@@ -383,7 +383,7 @@ bool Thread::search(QString word)
 		html_main += html_head_l + output_words[i] + html_head_r + html_br;
 		html_main += html_desc_l + output_texts[i] + html_desc_r;
 
-		html_mini += html_head_l + output_words[i] + html_head_r + "：";
+		html_mini += html_head_l + output_words[i] + html_head_r + u8"：";
 		html_mini += html_desc_l + output_texts[i] + html_desc_r;
 	}
 
@@ -406,7 +406,7 @@ bool Thread::search(QString word)
 		//{u8"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))",""},
 		{u8"(\\{.+?\\}|\\(.+?\\))",""},
 		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)",""},
-		{u8"\\r\\n|\\n|\\r", "；"}
+		{u8"\\r\\n|\\n|\\r", u8"；"}
 	};
 	for (auto re_rule : re_rules_popup) {
 		html_mini = std::regex_replace(html_mini, std::regex(re_rule[0]), re_rule[1]);
