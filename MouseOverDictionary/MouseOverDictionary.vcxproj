@@ -119,6 +119,9 @@
     <ClInclude Include="screen_ocr.h" />
     <QtMoc Include="thread.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mouse_over_dictionary.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />

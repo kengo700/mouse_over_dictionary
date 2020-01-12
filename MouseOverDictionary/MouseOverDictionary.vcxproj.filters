@@ -85,4 +85,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mouse_over_dictionary.rc" />
+  </ItemGroup>
 </Project>
