@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QDebug>
 #include <QRegularExpression>
+#include <QTextBoundaryFinder>
 #include <string>
 #include <cctype>
 #include <regex>

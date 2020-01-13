@@ -16,12 +16,15 @@ public:
 		return is_infinitive;
 	}
 
-	// 複数形
+	// 複数形、三人称単数現在形
 public:
-	bool processPlural(std::string plural, std::string& singular) {
+	bool processPlural(int rule_set_num, std::string plural, std::string& singular) {
 		singular = plural;
 		bool is_plural = false;
-		for (auto singular_rule : singular_rules) {
+		if (rule_set_num > singular_rules_set.size()) {
+			rule_set_num = singular_rules_set.size();
+		}
+		for (auto singular_rule : singular_rules_set[rule_set_num]) {
 			if (std::regex_match(plural, std::regex(singular_rule[0]))) {
 				singular = std::regex_replace(plural, std::regex(singular_rule[0]), singular_rule[1]);
 				is_plural = true;
@@ -33,10 +36,12 @@ public:
 
 	bool processPlural(std::string plural, std::vector<std::string>& singular) {
 		bool is_plural = false;
-		for (auto singular_rule : singular_rules) {
-			if (std::regex_match(plural, std::regex(singular_rule[0]))) {
-				singular.push_back(std::regex_replace(plural, std::regex(singular_rule[0]), singular_rule[1]));
-				return is_plural;
+		for (auto singular_rules : singular_rules_set) {
+			for (auto singular_rule : singular_rules) {
+				if (std::regex_match(plural, std::regex(singular_rule[0]))) {
+					singular.push_back(std::regex_replace(plural, std::regex(singular_rule[0]), singular_rule[1]));
+					return is_plural;
+				}
 			}
 		}
 		return is_plural;
@@ -45,28 +50,32 @@ public:
 private:
 	// Reference: https://gist.github.com/mrenouf/805745
 	// Author: mrenouf https://gist.github.com/mrenouf
-	std::vector<std::vector<std::string>> singular_rules =
+	std::vector<std::vector<std::vector<std::string>>> singular_rules_set =
 	{
-		{"(.*)people$", "$1person"},
-		{"oxen$", "ox"},
-		{"children$", "child"},
-		{"feet$", "foot"},
-		{"teeth$", "tooth"},
-		{"geese$", "goose"},
-		{"(.*)ives?$", "$1ife"},
-		{"(.*)ves?$", "$1f"},
-		{"(.*)men$", "$1man"},
-		{"(.+[aeiou])ys$", "$1y"},
-		{"(.+[^aeiou])ies$", "$1y"},
-		{"(.+)zes$", "$1"},
-		{"([m|l])ice$", "$1ouse"},
-		{"matrices$", "matrix"},
-		{"indices$", "index"},
-		{"(.+[^aeiou])ices$", "$1ice"},
-		{"(.*)ices$", "$1ex"},
-		{"(octop|vir)i$", "$1us"},
-		{"(.+(s|x|sh|ch))es$", "$1"},
-		{"(.+)s$", "$1"},
+		{
+			{"(.*)people$", "$1person"},
+			{"oxen$", "ox"},
+			{"children$", "child"},
+			{"feet$", "foot"},
+			{"teeth$", "tooth"},
+			{"geese$", "goose"},
+			{"(.*)ives?$", "$1ife"},
+			{"(.*)ves?$", "$1f"},
+			{"(.*)men$", "$1man"},
+			{"(.+[aeiou])ys$", "$1y"},
+			{"(.+[^aeiou])ies$", "$1y"},
+			{"(.+)zes$", "$1"},
+			{"([m|l])ice$", "$1ouse"},
+			{"matrices$", "matrix"},
+			{"indices$", "index"},
+			{"(.+[^aeiou])ices$", "$1ice"},
+			{"(.*)ices$", "$1ex"},
+			{"(octop|vir)i$", "$1us"},
+			{"(.+(s|x|sh|ch))es$", "$1"},
+			{"(.+)s$", "$1"},
+		},{
+			{"(.+)s$", "$1"}, // pulses → pulseなど
+		}
 	};
 
 	// 過去形（仮）
@@ -104,19 +113,24 @@ private:
 	std::vector<std::vector<std::vector<std::string>>> pasttense_rules_set =
 	{
 		{
+			{"abode", "abide"},
+			{"addrest", "address"},
 			{"arose$", "arise"},
 			{"arisen$", "arise"},
+			{"awoke$", "awake"},
+			{"awoken$", "awake"},
 			{"was$", "be"},
 			{"were$", "be"},
 			{"been$", "be"},
+			{"bore$", "bear"},
+			{"borne$", "bear"},
+			{"born$", "bear"},
 			{"beaten$", "beat"},
 			{"became$", "become"},
 			{"become$", "become"},
 			{"began$", "begin"},
 			{"begun$", "begin"},
 			{"bent$", "bend"},
-			{"bit$", "bite"},
-			{"bitten$", "bite"},
 			{"blew$", "blow"},
 			{"blown$", "blow"},
 			{"broke$", "break"},
@@ -176,6 +190,8 @@ private:
 			{"lost$", "lose"},
 			{"made$", "make"},
 			{"met$", "meet"},
+			{"mistaken", "mistake"},
+			{"mistook", "mistake"},
 			{"paid$", "pay"},
 			{"rode$", "ride"},
 			{"ridden$", "ride"},
@@ -202,7 +218,6 @@ private:
 			{"sung$", "sing"},
 			{"sank$", "sink"},
 			{"sunk$", "sink"},
-			{"sat$", "sit"},
 			{"slept$", "sleep"},
 			{"spoke$", "speak"},
 			{"spoken$", "speak"},
@@ -240,6 +255,12 @@ private:
 			{"withstood$", "withstand"},
 			{"wrote$", "write"},
 			{"written$", "write"},
+			{"(.+)lit", "$1alight" },
+			{"(.+)slid", "$1slide" },
+			{"(.+)slidden", "$1slide" },
+			{"(.+)bit$", "$1bite"},
+			{"(.+)bitten$", "$1bite"},
+			{"(.+)sat$", "$1sit"},
 			{"(.+)cked$", "$1c"},
 			{"(.+)nned$", "$1n"},
 			{"(.+)tted$", "$1t"},

@@ -52,7 +52,6 @@ bool Dictionary::Load(std::string foldername)
 //   ejdic-hand形式について：https://github.com/kujirahand/EJDict
 bool Dictionary::LoadEJDIC(std::string filename)
 {
-	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
 	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
@@ -100,8 +99,6 @@ bool Dictionary::LoadEJDIC(std::string filename)
 //   辞郎形式について：http://www.eijiro.jp/spec.htm
 bool Dictionary::LoadEIJIRO(std::string filename)
 {
-
-	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
 	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
@@ -161,7 +158,6 @@ bool Dictionary::LoadEIJIRO(std::string filename)
 //   PDIC1行テキスト形式について：http://pdic.la.coocan.jp/unicode/help/OneLineFormat.html
 bool Dictionary::LoadPDIC1(std::string filename)
 {
-//	QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
 	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く
@@ -216,8 +212,6 @@ bool Dictionary::Find(std::string word, std::string& text)
 
 enum DictionaryFormat Dictionary::getFormat(std::string filename)
 {
-
-	//QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
 	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 
 	// ファイルを開く

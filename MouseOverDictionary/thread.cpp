@@ -135,30 +135,43 @@ bool Thread::search(QString word)
 		return false;
 	}
 
-	// 前後のホワイトスペースを削除し、ワード間のホワイトスペースが複数個の場合は1つにする
-	word = word.simplified();
-
-	// スペースで分割
-	QStringList original_words = word.split(" ");
-
 	// 検索するワードの候補
 	std::vector<std::string> lookup_words;
 
-	// 前処理
-	for (int i = 0; i < original_words.size(); ++i) {
+	// 前後のホワイトスペースを削除し、ワード間のホワイトスペースが複数個の場合は1つにする
+	word = word.simplified();
 
-		// 記号を削除
-		std::string temp_word = original_words[i].toStdString();
-		size_t c;
-		while ((c = temp_word.find_first_of(u8" ,.;:()[]*\"!?")) != std::string::npos) {
-			temp_word.erase(c, 1);
-		}
-		original_words[i] = QString::fromStdString(temp_word);
-	}
+
+	// スペースで分割しただけのものを候補に追加
+	QStringList spaced_words = word.split(" ");
 
 	// 熟語に対応するため、マウスより右にあるワードを順次追加
 	std::string temp_word = u8"";
 	std::vector<std::string> temp_lookup_words;
+	for (int i = 0; i < spaced_words.size(); ++i) {
+		temp_word += spaced_words[i].toStdString();
+		temp_lookup_words.push_back(temp_word);
+		temp_word += u8" ";
+	}
+	// 熟語を先に表示するため、逆順にして結合
+	std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
+	lookup_words.insert(lookup_words.end(), temp_lookup_words.begin(), temp_lookup_words.end());
+
+
+	// QTextBoundaryFinderを使用して、ワードのみを抽出したものを候補に追加
+	QStringList original_words;
+	auto finder = new QTextBoundaryFinder(QTextBoundaryFinder::Word, word);
+	int prevPos = 0;
+	while (finder->toNextBoundary() != -1) {
+		// toNextBoundary()後に確認しているため、ワードの終わりであるか（EndOfItem）を見ている
+		auto reason = finder->boundaryReasons();
+		if (reason.testFlag(QTextBoundaryFinder::BreakOpportunity) && reason.testFlag(QTextBoundaryFinder::EndOfItem)){
+			original_words.append(word.mid(prevPos, finder->position() - prevPos));
+		}
+		prevPos = finder->position();
+	}
+
+	// 熟語に対応するため、マウスより右にあるワードを順次追加
 	for (int i = 0; i < original_words.size(); ++i) {
 		temp_word += original_words[i].toStdString();
 		temp_lookup_words.push_back(temp_word);
@@ -167,6 +180,7 @@ bool Thread::search(QString word)
 	// 熟語を先に表示するため、逆順にして結合
 	std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
 	lookup_words.insert(lookup_words.end(), temp_lookup_words.begin(), temp_lookup_words.end());
+
 
 	// 小文字にしたバージョンを候補に追加
 	QStringList lower_words;
@@ -197,31 +211,33 @@ bool Thread::search(QString word)
 	// 複数形を単数形にしたバージョンを候補に追加
 	//  名詞以外も変換してしまうので要修正（「this→thi」など）
 	//  辞書でヒットしなければ表示されないので、大きな問題はないはず
-	QStringList singular_words;
-	bool include_plural = false;
-	for (int i = 0; i < lower_words_count; ++i) {
+	for (int rule_set_num = 0; rule_set_num < 2; rule_set_num++) {
+		QStringList singular_words;
+		bool include_plural = false;
+		for (int i = 0; i < lower_words_count; ++i) {
 
-		// 単数形を取得
-		if (inflect.processPlural(lower_words[i].toStdString(), temp_word)) {
-			include_plural = true;
-		};
-		singular_words.push_back(QString::fromStdString(temp_word));
-	}
-
-	// 熟語に対応するため、マウスより右にあるワードを順次追加
-	if (include_plural) {
-		temp_word = u8"";
-		temp_lookup_words.clear();
-		for (int i = 0; i < singular_words.size(); ++i) {
-			temp_word += singular_words[i].toStdString();
-			temp_lookup_words.push_back(temp_word);
-			//sub_lookup_words.push_back(temp_word);
-			temp_word += u8" ";
+			// 単数形を取得
+			if (inflect.processPlural(rule_set_num, lower_words[i].toStdString(), temp_word)) {
+				include_plural = true;
+			};
+			singular_words.push_back(QString::fromStdString(temp_word));
 		}
-		// 熟語を先に表示するため、逆順にして結合
-		std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
-		lookup_words.insert(lookup_words.end(), temp_lookup_words.begin(), temp_lookup_words.end());
+
+		// 熟語に対応するため、マウスより右にあるワードを順次追加
+		if (include_plural) {
+			temp_word = u8"";
+			temp_lookup_words.clear();
+			for (int i = 0; i < singular_words.size(); ++i) {
+				temp_word += singular_words[i].toStdString();
+				temp_lookup_words.push_back(temp_word);
+				temp_word += u8" ";
+			}
+			// 熟語を先に表示するため、逆順にして結合
+			std::reverse(begin(temp_lookup_words), end(temp_lookup_words));
+			lookup_words.insert(lookup_words.end(), temp_lookup_words.begin(), temp_lookup_words.end());
+		}
 	}
+
 
 	// 過去形を現在形にしたバージョンを候補に追加
 	for (int rule_set_num = 0; rule_set_num < 2; rule_set_num++) {
@@ -251,6 +267,7 @@ bool Thread::search(QString word)
 		}
 	}
 
+
 	// 現在分詞を原型にしたバージョンを候補に追加
 	for (int rule_set_num = 0; rule_set_num < 2; rule_set_num++) {
 		QStringList infinitive_words;
@@ -279,6 +296,7 @@ bool Thread::search(QString word)
 
 		}
 	}
+
 
 	// 代名詞をoneやsomeoneにしたバージョンを候補に追加
 	for (int rule_set_num = 0; rule_set_num < 3; rule_set_num++) {
@@ -342,8 +360,56 @@ bool Thread::search(QString word)
 				found_word_count_max = original_words.count();
 			}
 
+			// 英辞郎のハイパーリンク機能書式にヒットする用語を追加で検索
+			std::smatch link_words;
+			if (std::regex_search(text, link_words, std::regex(u8"\\<→.+?\\>")))
+			{
+				std::string link_word = link_words[0].str();
+				link_word.erase(link_word.begin(), link_word.begin() + 4); // 「<→」削除
+				link_word.pop_back(); // 「>」削除
+
+				if (dict.Find(link_word, text)) {
+					output_words.push_back(link_word);
+					output_texts.push_back(text);
+				}
+			}
+			// 矢印だけの場合もあるっぽい
+			else if (std::regex_search(text, link_words, std::regex(u8"→.+?$")))
+			{
+				std::string link_word = link_words[0].str();
+				link_word.erase(link_word.begin(), link_word.begin() + 3); // 「→」削除
+
+				if (dict.Find(link_word, text)) {
+					output_words.push_back(link_word);
+					output_texts.push_back(text);
+				}
+			}
+
+			// ejdic形式では「=」で表現されている
+			//  他の辞書形式の文中の「=」も拾ってしまうが、検索にヒットしなければ表示されないのでよしとする
+			if (std::regex_search(text, link_words, std::regex(u8"=.+?$")))
+			{
+				std::string link_word = link_words[0].str();
+				link_word.erase(link_word.begin(), link_word.begin() + 1); // 「=」削除
+
+				// 前後のホワイトスペースを削除し、ワード間のホワイトスペースが複数個の場合は1つにする
+				QString temp = QString::fromStdString(link_word);
+				temp = temp.simplified();
+				link_word = temp.toStdString();
+
+				if (dict.Find(link_word, text)) {
+					output_words.push_back(link_word);
+					output_texts.push_back(text);
+				}
+			}
+
+
 			found = true;
 		}
+	}
+
+	if (found == false) {
+		return false;
 	}
 
 	// 検索履歴に記録する文字列を作成
@@ -414,13 +480,9 @@ bool Thread::search(QString word)
 
 	// 結果をシグナル経由で伝達
 	mutex.lock();
-	if (found) {
-		//emit mainTextChanged(QString::fromLocal8Bit(html_main.c_str()));
-		//emit miniTextChanged(QString::fromLocal8Bit(html_mini.c_str()));
-		emit mainTextChanged(QString::fromUtf8(html_main.c_str()));
-		emit miniTextChanged(QString::fromUtf8(html_mini.c_str()));
-		emit wordFound(QString::fromStdString(history_word));
-	}
+	emit mainTextChanged(QString::fromUtf8(html_main.c_str()));
+	emit miniTextChanged(QString::fromUtf8(html_mini.c_str()));
+	emit wordFound(QString::fromStdString(history_word));
 	mutex.unlock();
 
 	return true;
