@@ -40,12 +40,12 @@
 * [PDIC１行テキスト形式（Unicode、Shift-JIS）](http://pdic.la.coocan.jp/unicode/help/OneLineFormat.html)
    * PDICで変換可能
 
-## その他
-
 ### 動作環境
 
 * Windows 10 64bit
 * 高DPI非対応
+
+## その他
 
 ### ライセンス
 
