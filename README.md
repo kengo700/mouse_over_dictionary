@@ -16,7 +16,7 @@
 ## 使い方
 
 ### インストール
-* 下記からダウンロードして解凍
+* 下記からダウンロードして展開
     * [MouseOverDictionary.ver.0.0.3.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.3/MouseOverDictionary.ver.0.0.3.zip)
 
 ### 主な機能
