@@ -6,6 +6,7 @@
 #include <QStringListModel>
 #include <QAbstractItemView>
 #include <QClipboard>
+#include <QSettings>
 
 #include "ui_mouse_over_dictionary.h"
 #include "mini_window.h"
@@ -17,8 +18,12 @@ class MouseOverDictionary : public QMainWindow
 
 public:
 	MouseOverDictionary(QWidget *parent = Q_NULLPTR);
+	~MouseOverDictionary();
 
 private:
+	void ReadSettings();
+	void WriteSettings();
+
 	Ui::MouseOverDictionaryClass ui;
 	MiniWindow *mini_window;
 	Thread thread;
@@ -33,6 +38,39 @@ private:
 	bool history_show = false;
 	bool mini_show = false;
 	bool stay_top = true;
+
+	int ocr_scale;
+	int ocr_area_left;
+	int ocr_area_right;
+	int ocr_area_top;
+	int ocr_area_bottom;
+
+	int main_window_word_font_size;
+	int main_window_text_font_size;
+	int main_window_mark_font_size;
+	std::string main_window_word_font_color;
+	std::string main_window_text_font_color;
+	std::string main_window_mark_font_color;
+	std::string main_window_background_color;
+
+	int mini_window_word_font_size;
+	int mini_window_text_font_size;
+	std::string mini_window_word_font_color;
+	std::string mini_window_text_font_color;
+	std::string mini_window_background_color;
+
+	int main_window_width;
+	int main_window_height;
+	int main_window_history_width;
+
+	int mini_window_width;
+	int mini_window_height;
+	int mini_window_position_x;
+	int mini_window_position_y;
+
+	bool show_mini_window;
+	bool show_history;
+	bool always_on_top;
 
 public slots:
 	// ToolButtonのchekableのトグルボタンは見た目が微妙だったので、普通のボタンクリックで切り替え

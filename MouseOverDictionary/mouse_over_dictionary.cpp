@@ -5,6 +5,10 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	// 設定ファイル読み込み
+	ReadSettings();
+
+
 	// 最初から最前面に表示
 	this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
@@ -68,6 +72,142 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 
 	// 文字認識スレッド開始
 	thread.start();
+
+}
+
+MouseOverDictionary::~MouseOverDictionary()
+{
+	// 設定ファイル書き込み
+	WriteSettings();
+}
+
+void MouseOverDictionary::ReadSettings()
+{
+	QSettings settings("settings.ini", QSettings::IniFormat);
+	settings.setIniCodec(QTextCodec::codecForName("UTF-8"));
+
+	// デザインの設定
+	settings.beginGroup("Color");
+	main_window_word_font_color  = settings.value("MainWindowWord", "#000088").toString().toStdString();
+	main_window_text_font_color  = settings.value("MainWindowText", "#101010").toString().toStdString();
+	main_window_mark_font_color  = settings.value("MainWindowMark", "#008000").toString().toStdString();
+	main_window_background_color = settings.value("MainWindowBackground", "#ffffff").toString().toStdString();
+	mini_window_word_font_color  = settings.value("MiniWindowWord", "#000088").toString().toStdString();
+	mini_window_text_font_color  = settings.value("MiniWindowText", "#101010").toString().toStdString();
+	mini_window_background_color = settings.value("MiniWindowBackground", "#ffffff").toString().toStdString();
+	settings.endGroup();
+
+	settings.beginGroup("FontSize");
+	main_window_word_font_size = settings.value("MainWindowWord", 10).toInt();
+	main_window_text_font_size = settings.value("MainWindowText", 10).toInt();
+	main_window_mark_font_size = settings.value("MainWindowMark", 10).toInt();
+	mini_window_word_font_size = settings.value("MiniWindowWord", 10).toInt();
+	mini_window_text_font_size = settings.value("MiniWindowText", 10).toInt();
+	settings.endGroup();
+
+	// ウィンドウの設定
+	settings.beginGroup("Window");
+	// MainWindowWidth
+	// MainWindowHeight
+	// MainWindowHistoryWidth
+	// MiniWindowWidth
+	// MiniWindowHeight
+	// MiniWindowPositionX
+	// MiniWindowPositionY
+
+	// ShowMiniWindow
+	// ShowHistory
+	// AlwaysOnTop
+	settings.endGroup();
+
+	// 文字認識の設定
+	settings.beginGroup("OCR");
+	// 画面キャプチャの範囲、カーソルから左右上下のピクセル数、キャプチャ幅 = AreaLeft + AreaRight、キャプチャ高さ = AreaTop + AreaBottom、範囲：1～500
+	ocr_area_left   = settings.value("CaptureAreaLeft", 50).toInt();
+	ocr_area_right  = settings.value("CaptureAreaRight", 150).toInt();
+	ocr_area_top    = settings.value("CaptureAreaTop", 20).toInt();
+	ocr_area_bottom = settings.value("CaptureAreaBottom", 20).toInt();
+	// 文字認識の精度を上げるためにキャプチャ後の画像を拡大する倍率、100→等倍、150→1.5倍、範囲：100～200
+	ocr_scale = settings.value("CaptureScale", 130).toInt();
+	settings.endGroup();
+
+
+	// 不正な値が指定されてしまわないように、色コードをチェック（要検討）
+	std::regex re_color("^#([\\da-fA-F]{6}|[\\da-fA-F]{3})$");
+	if (std::regex_match(main_window_word_font_color , re_color) != 1) main_window_word_font_color  = "#000088";
+	if (std::regex_match(main_window_text_font_color , re_color) != 1) main_window_text_font_color  = "#101010";
+	if (std::regex_match(main_window_mark_font_color , re_color) != 1) main_window_mark_font_color  = "#008000";
+	if (std::regex_match(main_window_background_color, re_color) != 1) main_window_background_color = "#ffffff";
+	if (std::regex_match(mini_window_word_font_color , re_color) != 1) mini_window_word_font_color  = "#000088";
+	if (std::regex_match(mini_window_text_font_color , re_color) != 1) mini_window_text_font_color  = "#101010";
+	if (std::regex_match(mini_window_background_color, re_color) != 1) mini_window_background_color = "#ffffff";
+
+	// 不正な値が指定されてしまわないように、各パラメータを範囲内に収める（要検討）
+	main_window_word_font_size = std::clamp(main_window_word_font_size, 3, 32);
+	main_window_text_font_size = std::clamp(main_window_text_font_size, 3, 32);
+	main_window_mark_font_size = std::clamp(main_window_mark_font_size, 3, 32);
+	mini_window_word_font_size = std::clamp(mini_window_word_font_size, 3, 32);
+	mini_window_text_font_size = std::clamp(mini_window_text_font_size, 3, 32);
+	ocr_scale       = std::clamp(ocr_scale,     100, 200);
+	ocr_area_left   = std::clamp(ocr_area_left,   1, 500);
+	ocr_area_right  = std::clamp(ocr_area_right,  1, 500);
+	ocr_area_top    = std::clamp(ocr_area_top,    1, 500);
+	ocr_area_bottom = std::clamp(ocr_area_bottom, 1, 500);
+
+	// 各パラメータを文字認識スレッドにセット
+	thread.setMainFontColor(main_window_word_font_color, main_window_text_font_color, main_window_mark_font_color, main_window_background_color);
+	thread.setMiniFontColor(mini_window_word_font_color, mini_window_text_font_color, mini_window_background_color);
+	thread.setMainFontSize(main_window_word_font_size, main_window_text_font_size, main_window_mark_font_size);
+	thread.setMiniFontSize(mini_window_word_font_size, mini_window_text_font_size);
+	thread.setOcrScale(ocr_scale);
+	thread.setOcrRoi(ocr_area_left, ocr_area_right, ocr_area_top, ocr_area_bottom);
+
+}
+
+void MouseOverDictionary::WriteSettings()
+{
+	QSettings settings("settings.ini", QSettings::IniFormat);
+	settings.setIniCodec(QTextCodec::codecForName("UTF-8"));
+
+	settings.beginGroup("Color");
+	settings.setValue("MainWindowWord", QString::fromStdString(main_window_word_font_color));
+	settings.setValue("MainWindowText", QString::fromStdString(main_window_text_font_color));
+	settings.setValue("MainWindowMark", QString::fromStdString(main_window_mark_font_color));
+	settings.setValue("MainWindowBackground", QString::fromStdString(main_window_background_color));
+	settings.setValue("MiniWindowWord", QString::fromStdString(mini_window_word_font_color));
+	settings.setValue("MiniWindowText", QString::fromStdString(mini_window_text_font_color));
+	settings.setValue("MiniWindowBackground", QString::fromStdString(mini_window_background_color));
+	settings.endGroup();
+
+	settings.beginGroup("FontSize");
+	settings.setValue("MainWindowWord", main_window_word_font_size);
+	settings.setValue("MainWindowText", main_window_text_font_size);
+	settings.setValue("MainWindowMark", main_window_mark_font_size);
+	settings.setValue("MiniWindowWord", mini_window_word_font_size);
+	settings.setValue("MiniWindowText", mini_window_text_font_size);
+	settings.endGroup();
+
+	settings.beginGroup("Window");
+	// MainWindowWidth
+	// MainWindowHeight
+	// MainWindowHistoryWidth
+	// MiniWindowWidth
+	// MiniWindowHeight
+	// MiniWindowPositionX
+	// MiniWindowPositionY
+
+	// ShowMiniWindow
+	// ShowHistory
+	// AlwaysOnTop
+	settings.endGroup();
+
+	settings.beginGroup("OCR");
+	settings.setValue("CaptureAreaLeft", ocr_area_left);
+	settings.setValue("CaptureAreaRight", ocr_area_right);
+	settings.setValue("CaptureAreaTop", ocr_area_top);
+	settings.setValue("CaptureAreaBottom", ocr_area_bottom);
+	settings.setValue("CaptureScale", ocr_scale);
+	settings.endGroup();
 
 }
 

@@ -23,6 +23,7 @@ private:
 
 public:
 	explicit Image(HDC DC, int X, int Y, int Width, int Height);
+	explicit Image(HDC DC, int X, int Y, int Width, int Height, int scale);
 
 	inline std::uint16_t GetBitsPerPixel() { return this->BitsPerPixel; }
 	inline std::uint16_t GetBytesPerPixel() { return this->BitsPerPixel / 8; }

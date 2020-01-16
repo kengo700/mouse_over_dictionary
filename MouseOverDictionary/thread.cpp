@@ -17,30 +17,46 @@ Thread::~Thread()
 void Thread::run()
 {
 	stopped = false;
+
+	std::string message_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;\">";
+	std::string message_r = "< / span>";
+
+	std::string message_tesseract_loading = message_l + u8"文字認識ライブラリ初期化中..." + message_r;
+	std::string message_tesseract_ng = message_l + u8"文字認識ライブラリ初期化失敗" + message_r;
+	std::string message_tesseract_ok = message_l + u8"文字認識ライブラリ初期化成功" + message_r;
+
+	std::string message_dictionary_loading = message_l + u8"辞書データ読み込み中..." + message_r;
+	std::string message_dictionary_ng = message_l + u8"辞書データ読み込み失敗" + message_r;
+	std::string message_dictionary_ok = message_l + u8"辞書データ読み込み成功" + message_r;
+
+	std::string message_ready = message_l + u8"準備完了！" + message_r;
+
 	// Tesseract初期化
-	emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化中..."));
+	emit mainTextChanged(QString::fromUtf8(message_tesseract_loading.c_str()));
 	if (ocr.Init() == false) {
-		emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化失敗"));
+		emit mainTextChanged(QString::fromUtf8(message_tesseract_ng.c_str()));
 		stopped = true;
 	}
 	else {
-		emit mainTextChanged(QString::fromUtf8(u8"文字認識ライブラリ初期化成功"));
+		emit mainTextChanged(QString::fromUtf8(message_tesseract_ok.c_str()));
 	}
 
 	// 辞書の読み込み
-	mutex.lock();
-	emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み中..."));
-	if (dict.Load("dictionary") == false) {
-		emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み失敗"));
-		stopped = true;
+	if(!stopped){
+		mutex.lock();
+		emit mainTextChanged(QString::fromUtf8(message_dictionary_loading.c_str()));
+		if (dict.Load("dictionary") == false) {
+			emit mainTextChanged(QString::fromUtf8(message_dictionary_ng.c_str()));
+			stopped = true;
+		}
+		else {
+			emit mainTextChanged(QString::fromUtf8(message_dictionary_ok.c_str()));
+		}
+		mutex.unlock();
 	}
-	else {
-		emit mainTextChanged(QString::fromUtf8(u8"辞書データ読み込み成功"));
-	}
-	mutex.unlock();
 
 	if (!stopped) {
-		emit mainTextChanged(QString::fromUtf8(u8"準備完了！"));
+		emit mainTextChanged(QString::fromUtf8(message_ready.c_str()));
 		emit ready(true);
 	}
 
@@ -56,24 +72,22 @@ void Thread::run()
 		// マウスがメインウィンドウ内にあるなら文字認識は実行しない
 		if (window_x < po.x && po.x < window_x + window_w &&
 			window_y < po.y && po.y < window_y + window_h) {
+			Sleep(1); // コンテキストスイッチを発生させてCPU使用率を下げる(Issue#2)
 			continue;
 		}
 
 		// マウスが移動していなければ文字認識は実行しない
 		if (po.x == old_po.x && po.y == old_po.y) {
+			Sleep(1); // コンテキストスイッチを発生させてCPU使用率を下げる(Issue#2)
 			continue;
 		}
 		old_po.x = po.x;
 		old_po.y = po.y;
 
-		int roi_w = 200;
-		int roi_h = 40;
-		int roi_mouse_x = roi_w / 4; // 熟語を取得するため、マウスの右側の領域を見る
-		int roi_mouse_y = roi_h / 2;
-
 		// マウス付近の画像を文字認識
-		if (ocr.Recognize(po.x - roi_mouse_x, po.y - roi_mouse_y, roi_w, roi_h) == false)
+		if (ocr.Recognize(po.x - roi_mouse_x, po.y - roi_mouse_y, roi_w, roi_h, ocr_scale) == false)
 		{
+			Sleep(1); // コンテキストスイッチを発生させてCPU使用率を下げる(Issue#2)
 			continue;
 		}
 
@@ -81,6 +95,7 @@ void Thread::run()
 		ocr.GetResults(ocr_results);
 
 		if (ocr_results.size() < 1) {
+			Sleep(1); // コンテキストスイッチを発生させてCPU使用率を下げる(Issue#2)
 			continue;
 		}
 
@@ -165,7 +180,7 @@ bool Thread::search(QString word)
 	while (finder->toNextBoundary() != -1) {
 		// toNextBoundary()後に確認しているため、ワードの終わりであるか（EndOfItem）を見ている
 		auto reason = finder->boundaryReasons();
-		if (reason.testFlag(QTextBoundaryFinder::BreakOpportunity) && reason.testFlag(QTextBoundaryFinder::EndOfItem)){
+		if (reason.testFlag(QTextBoundaryFinder::BreakOpportunity) && reason.testFlag(QTextBoundaryFinder::EndOfItem)) {
 			original_words.append(word.mid(prevPos, finder->position() - prevPos));
 		}
 		prevPos = finder->position();
@@ -211,7 +226,7 @@ bool Thread::search(QString word)
 	// 複数形を単数形にしたバージョンを候補に追加
 	//  名詞以外も変換してしまうので要修正（「this→thi」など）
 	//  辞書でヒットしなければ表示されないので、大きな問題はないはず
-	for (int rule_set_num = 0; rule_set_num < 2; rule_set_num++) {
+	for (int rule_set_num = 0; rule_set_num < 3; rule_set_num++) {
 		QStringList singular_words;
 		bool include_plural = false;
 		for (int i = 0; i < lower_words_count; ++i) {
@@ -269,7 +284,7 @@ bool Thread::search(QString word)
 
 
 	// 現在分詞を原型にしたバージョンを候補に追加
-	for (int rule_set_num = 0; rule_set_num < 2; rule_set_num++) {
+	for (int rule_set_num = 0; rule_set_num < 3; rule_set_num++) {
 		QStringList infinitive_words;
 		bool include_participle = false;
 		for (int i = 0; i < lower_words_count; ++i) {
@@ -338,7 +353,7 @@ bool Thread::search(QString word)
 			sorted.push_back(*it);
 	}
 	lookup_words = sorted;
-	
+
 	// 辞書から検索
 	std::vector<std::string> output_words;
 	std::vector<std::string> output_texts;
@@ -427,10 +442,14 @@ bool Thread::search(QString word)
 	std::string html_main = u8""; // メインウィンドウ用
 	std::string html_mini = u8""; // マウス追従ウィンドウ用
 
-	std::string html_head_l = u8"<span style = \"color:#000088;font-weight:bold;\">";
-	std::string html_head_r = u8"</span>";
-	std::string html_desc_l = u8"<span style = \"color:#101010;\">";
-	std::string html_desc_r = u8"</span>";
+	std::string html_main_head_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + main_window_word_font_color + ";font-size:" + std::to_string(main_window_word_font_size) + "pt;font-weight:bold;\">";
+	std::string html_main_head_r = u8"</span>";
+	std::string html_main_desc_l = u8"<span style = \"color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;\">";
+	std::string html_main_desc_r = u8"</span>";
+	std::string html_mini_head_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + mini_window_word_font_color + ";font-size:" + std::to_string(mini_window_word_font_size) + "pt;font-weight:bold;\">";
+	std::string html_mini_head_r = u8"</span>";
+	std::string html_mini_desc_l = u8"<span style = \"color:" + mini_window_text_font_color + ";font-size:" + std::to_string(mini_window_text_font_size) + "pt;\">";
+	std::string html_mini_desc_r = u8"</span>";
 	std::string html_hr = u8"<hr>";
 	std::string html_br = u8"<br/>";
 
@@ -443,23 +462,21 @@ bool Thread::search(QString word)
 		// 各ワードの間（2つ目以降のワードの上）に横線を入れる
 		if (i > 0) {
 			html_main += html_hr;
-			html_mini += html_br;
+			//html_mini += html_br;
 		}
 
-		html_main += html_head_l + output_words[i] + html_head_r + html_br;
-		html_main += html_desc_l + output_texts[i] + html_desc_r;
+		html_main += html_main_head_l + output_words[i] + html_main_head_r + html_br;
+		html_main += html_main_desc_l + output_texts[i] + html_main_desc_r;
 
-		html_mini += html_head_l + output_words[i] + html_head_r + u8"：";
-		html_mini += html_desc_l + output_texts[i] + html_desc_r;
+		html_mini += html_mini_head_l + output_words[i] + html_mini_head_r + u8"：";
+		html_mini += html_mini_desc_l + output_texts[i] + html_mini_desc_r;
 	}
 
 	// テキストを修飾
 	std::vector<std::vector<std::string>> re_rules = {
-		//{u8"(■.+?$|◆.+?$|・.+?$)","<span style=\"color:#008000;\">$1</span>"},
-		{u8"(■.+?$|◆.+?$)","<span style=\"color:#008000;\">$1</span>"},
-		//{u8"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
-		{u8"(\\{.+?\\}|\\(.+?\\))","<span style=\"color:#008000;\">$1</span>"},
-		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span style=\"color:#008000;\">$1</span>"},
+		{u8"(■.+?$|◆.+?$)","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
+		{u8"(\\{.+?\\}|\\(.+?\\))","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
+		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
 		{u8"\\r\\n|\\n|\\r", "<br/>"}
 	};
 	for (auto re_rule : re_rules) {
@@ -467,9 +484,7 @@ bool Thread::search(QString word)
 	}
 
 	std::vector<std::vector<std::string>> re_rules_popup = {
-		//{u8"(■.+?$|◆.+?$|・.+?$)",""},
 		{u8"(■.+?$|◆.+?$)",""},
-		//{u8"(\\{.+?\\}|\\[.+?\\]|\\(.+?\\))",""},
 		{u8"(\\{.+?\\}|\\(.+?\\))",""},
 		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)",""},
 		{u8"\\r\\n|\\n|\\r", u8"；"}
@@ -509,4 +524,45 @@ void Thread::setWindowSize(int w, int h)
 	window_w = w;
 	window_h = h;
 	mutex.unlock();
+}
+
+void Thread::setOcrScale(int ocr_scale)
+{
+	this->ocr_scale = ocr_scale;
+}
+
+void Thread::setOcrRoi(int left, int right, int top, int bottom)
+{
+	roi_w = left + right;
+	roi_h = top + bottom;
+	roi_mouse_x = left;
+	roi_mouse_y = top;
+}
+
+void Thread::setMainFontColor(std::string word, std::string text, std::string mark, std::string background)
+{
+	main_window_word_font_color = word;
+	main_window_text_font_color = text;
+	main_window_mark_font_color = mark;
+	main_window_background_color = background;
+}
+
+void Thread::setMiniFontColor(std::string word, std::string text, std::string background)
+{
+	mini_window_word_font_color = word;
+	mini_window_text_font_color = text;
+	mini_window_background_color = background;
+}
+
+void Thread::setMainFontSize(int word, int text, int mark)
+{
+	main_window_word_font_size = word;
+	main_window_text_font_size = text;
+	main_window_mark_font_size = mark;
+}
+
+void Thread::setMiniFontSize(int word, int text)
+{
+	mini_window_word_font_size = word;
+	mini_window_text_font_size = text;
 }

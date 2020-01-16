@@ -23,6 +23,6 @@ private:
 
 public:
 	bool Init();
-	bool Recognize(int x, int y, int width, int height);
+	bool Recognize(int x, int y, int width, int height, int scale);
 	void GetResults(std::vector<ocr_result>& results);
 };

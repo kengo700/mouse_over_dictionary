@@ -29,7 +29,7 @@ bool ScreenOCR::Init()
 }
 
 
-bool ScreenOCR::Recognize(int x, int y, int width, int height)
+bool ScreenOCR::Recognize(int x, int y, int width, int height, int scale)
 {
 
 	HWND SomeWindowHandle = GetDesktopWindow();
@@ -39,14 +39,10 @@ bool ScreenOCR::Recognize(int x, int y, int width, int height)
 		return false;
 	}
 
-	int roi_w = 200;
-	int roi_h = 40;
-	int roi_mouse_x = roi_w / 2;
-	int roi_mouse_y = roi_h / 2;
-
 	// マウス付近の画像をキャプチャ
 	try {
-		Image Img = Image(DC, x, y, width, height);
+		//Image Img = Image(DC, x, y, width, height);
+		Image Img = Image(DC, x, y, width, height, scale);
 		tesseract_ptr->SetImage(Img.GetPixels(), Img.GetWidth(), Img.GetHeight(), Img.GetBytesPerPixel(), Img.GetBytesPerScanLine()); //Fixed this line..
 	}
 	catch (...) {
@@ -67,6 +63,11 @@ bool ScreenOCR::Recognize(int x, int y, int width, int height)
 		do {
 			ocr_result result;
 			ri->BoundingBox(level, &result.x1, &result.y1, &result.x2, &result.y2);
+
+			result.x1 = (int)(result.x1 * 100 / scale);
+			result.y1 = (int)(result.y1 * 100 / scale);
+			result.x2 = (int)(result.x2 * 100 / scale);
+			result.y2 = (int)(result.y2 * 100 / scale);
 
 			const char* word = ri->GetUTF8Text(level);
 			if (word != NULL) {
