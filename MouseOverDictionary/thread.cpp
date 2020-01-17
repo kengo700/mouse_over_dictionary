@@ -18,18 +18,23 @@ void Thread::run()
 {
 	stopped = false;
 
-	std::string message_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;\">";
-	std::string message_r = "< / span>";
+	std::string message_style = "<head><style type=\"text/css\">";
+	message_style += "body {background-color:" + main_window_background_color + "}";
+	message_style += ".maintext {color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;}";
+	message_style += "</style></head>";
 
-	std::string message_tesseract_loading = message_l + u8"文字認識ライブラリ初期化中..." + message_r;
-	std::string message_tesseract_ng = message_l + u8"文字認識ライブラリ初期化失敗" + message_r;
-	std::string message_tesseract_ok = message_l + u8"文字認識ライブラリ初期化成功" + message_r;
+	std::string message_l = "<body><span class=\"maintext\">";
+	std::string message_r = "</span></body>";
 
-	std::string message_dictionary_loading = message_l + u8"辞書データ読み込み中..." + message_r;
-	std::string message_dictionary_ng = message_l + u8"辞書データ読み込み失敗" + message_r;
-	std::string message_dictionary_ok = message_l + u8"辞書データ読み込み成功" + message_r;
+	std::string message_tesseract_loading  = message_style + message_l + u8"文字認識ライブラリ初期化中..." + message_r;
+	std::string message_tesseract_ng       = message_style + message_l + u8"文字認識ライブラリ初期化失敗" + message_r;
+	std::string message_tesseract_ok       = message_style + message_l + u8"文字認識ライブラリ初期化成功" + message_r;
 
-	std::string message_ready = message_l + u8"準備完了！" + message_r;
+	std::string message_dictionary_loading = message_style + message_l + u8"辞書データ読み込み中..." + message_r;
+	std::string message_dictionary_ng      = message_style + message_l + u8"辞書データ読み込み失敗" + message_r;
+	std::string message_dictionary_ok      = message_style + message_l + u8"辞書データ読み込み成功" + message_r;
+
+	std::string message_ready              = message_style + message_l + u8"準備完了！" + message_r;
 
 	// Tesseract初期化
 	emit mainTextChanged(QString::fromUtf8(message_tesseract_loading.c_str()));
@@ -439,19 +444,26 @@ bool Thread::search(QString word)
 	}
 
 	// HTML形式に変換
-	std::string html_main = u8""; // メインウィンドウ用
-	std::string html_mini = u8""; // マウス追従ウィンドウ用
+	std::string html_main_style = "<head><style type=\"text/css\">";
+	html_main_style += "body {background-color:" + main_window_background_color + "}";
+	html_main_style += ".mainword {color:" + main_window_word_font_color + ";font-size:" + std::to_string(main_window_word_font_size) + "pt;font-weight:bold;}";
+	html_main_style += ".maintext {color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;}";
+	html_main_style += ".mainmark {color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;}";
+	html_main_style += "</style></head><body>";
 
-	std::string html_main_head_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + main_window_word_font_color + ";font-size:" + std::to_string(main_window_word_font_size) + "pt;font-weight:bold;\">";
-	std::string html_main_head_r = u8"</span>";
-	std::string html_main_desc_l = u8"<span style = \"color:" + main_window_text_font_color + ";font-size:" + std::to_string(main_window_text_font_size) + "pt;\">";
-	std::string html_main_desc_r = u8"</span>";
-	std::string html_mini_head_l = u8"<body bgcolor=\"" + main_window_background_color + "\"><span style = \"color:" + mini_window_word_font_color + ";font-size:" + std::to_string(mini_window_word_font_size) + "pt;font-weight:bold;\">";
-	std::string html_mini_head_r = u8"</span>";
-	std::string html_mini_desc_l = u8"<span style = \"color:" + mini_window_text_font_color + ";font-size:" + std::to_string(mini_window_text_font_size) + "pt;\">";
-	std::string html_mini_desc_r = u8"</span>";
-	std::string html_hr = u8"<hr>";
-	std::string html_br = u8"<br/>";
+	std::string html_mini_style = "<head><style type=\"text/css\">";
+	html_mini_style += "body {background-color:" + mini_window_background_color + "}";
+	html_mini_style += ".miniword {color:" + mini_window_word_font_color + ";font-size:" + std::to_string(mini_window_word_font_size) + "pt;font-weight:bold;}";
+	html_mini_style += ".minitext {color:" + mini_window_text_font_color + ";font-size:" + std::to_string(mini_window_text_font_size) + "pt;}";
+	html_mini_style += "</style></head><body>";
+
+	std::string html_main_head = "<span class=\"mainword\">";
+	std::string html_main_desc = "<span class=\"maintext\">";
+	std::string html_mini_head = "<span class=\"miniword\">";
+	std::string html_mini_desc = "<span class=\"minitext\">";
+
+	std::string html_main = ""; // メインウィンドウ用
+	std::string html_mini = ""; // マウス追従ウィンドウ用
 
 	for (int i = 0; i < output_words.size(); i++) {
 
@@ -461,37 +473,42 @@ bool Thread::search(QString word)
 
 		// 各ワードの間（2つ目以降のワードの上）に横線を入れる
 		if (i > 0) {
-			html_main += html_hr;
-			//html_mini += html_br;
+			html_main += "<hr>";
+			html_mini += "<br/>";
 		}
 
-		html_main += html_main_head_l + output_words[i] + html_main_head_r + html_br;
-		html_main += html_main_desc_l + output_texts[i] + html_main_desc_r;
+		html_main += html_main_head + output_words[i] + "</span>" + "<br/>";
+		html_main += html_main_desc + output_texts[i] + "</span>";
 
-		html_mini += html_mini_head_l + output_words[i] + html_mini_head_r + u8"：";
-		html_mini += html_mini_desc_l + output_texts[i] + html_mini_desc_r;
+		html_mini += html_mini_head + output_words[i] + "</span>" + u8"：";
+		html_mini += html_mini_desc + output_texts[i] + "</span>";
 	}
 
 	// テキストを修飾
-	std::vector<std::vector<std::string>> re_rules = {
-		{u8"(■.+?$|◆.+?$)","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
-		{u8"(\\{.+?\\}|\\(.+?\\))","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
-		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span style=\"color:" + main_window_mark_font_color + ";font-size:" + std::to_string(main_window_mark_font_size) + "pt;\">$1</span>"},
+	std::vector<std::vector<std::string>> re_main_rules = {
+		{u8"(■.+?$|◆.+?$)","<span class=\"mainmark\">$1</span>"},
+		{u8"(\\{.+?\\}|\\(.+?\\))","<span class=\"mainmark\">$1</span>"},
+		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)","<span class=\"mainmark\">$1</span>"},
 		{u8"\\r\\n|\\n|\\r", "<br/>"}
 	};
-	for (auto re_rule : re_rules) {
+	for (auto re_rule : re_main_rules) {
 		html_main = std::regex_replace(html_main, std::regex(re_rule[0]), re_rule[1]);
 	}
 
-	std::vector<std::vector<std::string>> re_rules_popup = {
+	std::vector<std::vector<std::string>> re_mini_rules = {
 		{u8"(■.+?$|◆.+?$)",""},
 		{u8"(\\{.+?\\}|\\(.+?\\))",""},
 		{u8"(【.+?】|《.+?》|〈.+?〉|〔.+?〕)",""},
 		{u8"\\r\\n|\\n|\\r", u8"；"}
 	};
-	for (auto re_rule : re_rules_popup) {
+	for (auto re_rule : re_mini_rules) {
 		html_mini = std::regex_replace(html_mini, std::regex(re_rule[0]), re_rule[1]);
 	}
+
+	// スタイル部分を付与（先につけておくと「{」「}」が置換されてしまうので最後に）
+	html_main = html_main_style + html_main + "</body>";
+	html_mini = html_mini_style + html_mini + "</body>";
+
 
 	// 結果をシグナル経由で伝達
 	mutex.lock();
