@@ -89,7 +89,7 @@
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\tesseract\build\x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>tesseract41.lib;leptonica-1.78.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tesseract41.lib;leptonica-1.78.0.lib;UGlobalHotkey.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

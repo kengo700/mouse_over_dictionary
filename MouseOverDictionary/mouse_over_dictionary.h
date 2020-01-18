@@ -7,10 +7,12 @@
 #include <QAbstractItemView>
 #include <QClipboard>
 #include <QSettings>
+#include <QScreen>
 
 #include "ui_mouse_over_dictionary.h"
 #include "mini_window.h"
 #include "thread.h"
+#include "UGlobalHotkey\uglobalhotkeys.h"
 
 class MouseOverDictionary : public QMainWindow
 {
@@ -29,6 +31,9 @@ private:
 	Thread thread;
 	QClipboard *clipboard;
 
+	UGlobalHotkeys *hm_show_hide_both;
+	UGlobalHotkeys *hm_show_hide_mini;
+
 	bool thread_ready = false;
 
 	QStringListModel *historyModel;
@@ -38,6 +43,10 @@ private:
 	bool history_show = false;
 	bool mini_show = false;
 	bool stay_top = true;
+
+	bool enable_shortcut;
+	QString hotkey_show_hide_both;
+	QString hotkey_show_hide_mini;
 
 	int ocr_scale;
 	int ocr_area_left;
@@ -61,16 +70,20 @@ private:
 
 	int main_window_width;
 	int main_window_height;
+	int main_window_pos_x;
+	int main_window_pos_y;
 	int main_window_history_width;
 
 	int mini_window_width;
 	int mini_window_height;
-	int mini_window_position_x;
-	int mini_window_position_y;
+	int mini_window_pos_x;
+	int mini_window_pos_y;
 
-	bool show_mini_window;
-	bool show_history;
-	bool always_on_top;
+	double main_window_opacity;
+	double mini_window_opacity;
+
+	int screen_width;
+	int screen_height;
 
 public slots:
 	// ToolButtonのchekableのトグルボタンは見た目が微妙だったので、普通のボタンクリックで切り替え
@@ -82,10 +95,14 @@ public slots:
 	void updateHistory(QString word);
 	void searchByHistory(const QItemSelection &selected);
 	void setFromClipboard();
+	void showHide();
+	void showHideMini();
 
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void moveEvent(QMoveEvent *event);
 	void closeEvent(QCloseEvent *event);
-
+	void changeEvent(QEvent *event);
+	//void hideEvent(QHideEvent *event);
+	//void showEvent(QShowEvent *event);
 };

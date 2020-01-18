@@ -5,24 +5,31 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	// スクリーンのサイズ取得
+	QScreen *screen = QGuiApplication::primaryScreen();
+	QRect  screenGeometry = screen->geometry();
+	screen_width = screenGeometry.width();
+	screen_height = screenGeometry.height();
+
 	// 設定ファイル読み込み
 	ReadSettings();
 
+	// 透明度設定
+	this->setWindowOpacity(main_window_opacity);
 
-	// 最初から最前面に表示
-	this->setWindowFlags(Qt::WindowStaysOnTopHint);
+	// 前回終了時のウィンドウ位置、サイズを復元
+	this->move(main_window_pos_x, main_window_pos_y);
+	this->resize(main_window_width, main_window_height);
 
-	// 最初から最前面ボタンをオンに
-	ui.toolButton_2->setChecked(true);
+	// 前回終了時の最前面設定を復元
+	if (stay_top == true) {
+		this->setWindowFlags(Qt::WindowStaysOnTopHint);
+		ui.toolButton_2->setIcon(QIcon(":/MouseOverDictionary/Resources/push-pin-2-line.png"));
+	}
+	else {
+		ui.toolButton_2->setIcon(QIcon(":/MouseOverDictionary/Resources/push-pin-line.png"));
+	}
 
-	// 最初は検索履歴を非表示に
-	ui.listView->hide();
-
-	// 検索履歴をダブルクリックで編集できないように設定
-	ui.listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-	// 編集履歴のサイズを小さく設定
-	ui.splitter->setSizes(QList<int>() << 100 << 300);
 
 	// マウス追従ウィンドウ作成
 	//   最小化や最前面設定を独立にしたいので、メインウィンドウの子（new MiniWindow(this);）にはしない
@@ -32,6 +39,11 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 	// マウス追従ウィンドウを最前面、枠なしに指定
 	mini_window->setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
+	// 透明度、サイズ、位置設定
+	mini_window->setWindowOpacity(mini_window_opacity);
+	mini_window->resize(mini_window_width, mini_window_height);
+	mini_window->setRelativePos(mini_window_pos_x, mini_window_pos_y);
+
 	// マウス追従ウィンドウをカーソルに追従
 	auto timer = new QTimer(this);
 	timer->setInterval(15);
@@ -39,11 +51,39 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 	connect(timer, SIGNAL(timeout()), mini_window, SLOT(followCursor()));
 	timer->start();
 
+	// 前回終了時のマウス追従ウィンドウの表示状態を復元
+	if (mini_show == true) {
+		mini_window->show();
+		ui.toolButton->setIcon(QIcon(":/MouseOverDictionary/Resources/chat-4-line.png"));
+	}
+	else {
+		mini_window->hide();
+		ui.toolButton->setIcon(QIcon(":/MouseOverDictionary/Resources/chat-off-line.png"));
+	}
+
+
+	// 検索履歴をダブルクリックで編集できないように設定
+	ui.listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+	// 編集履歴のサイズを小さく設定
+	ui.splitter->setSizes(QList<int>() << 100 << 300);
+
 	// 検索履歴モデルを設定
 	historyModel = new QStringListModel(this);
 	QStringList historyList;
 	historyModel->setStringList(historyList);
 	ui.listView->setModel(historyModel);
+
+	// 前回終了時の検索履歴表示状態を復元
+	if (history_show == true) {
+		ui.toolButton_3->setIcon(QIcon(":/MouseOverDictionary/Resources/side-bar-line.png"));
+		ui.listView->show();
+	}
+	else {
+		ui.toolButton_3->setIcon(QIcon(":/MouseOverDictionary/Resources/side-bar-line-hide.png"));
+		ui.listView->hide();
+	}
+
 
 	// 準備完了時にワード欄を有効化
 	connect(&thread, SIGNAL(ready(bool)), ui.lineEdit, SLOT(setEnabled(bool)));
@@ -69,6 +109,27 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 	// クリップボードが変化したときに、その内容をワード欄にセット
 	clipboard = QApplication::clipboard();
 	connect(clipboard, SIGNAL(dataChanged()), this, SLOT(setFromClipboard()));
+
+
+	// キーボードショートカット設定
+	//   new UGlobalHotkeys(this)として紐づけると、なぜかメインウィンドウの左上部分がクリックできなくなった
+	//   なので紐づけずにcloseEvent()で削除することに
+	hm_show_hide_both = new UGlobalHotkeys();
+	hm_show_hide_both->registerHotkey(hotkey_show_hide_both);
+	connect(hm_show_hide_both, &UGlobalHotkeys::activated, [&](size_t id) {
+		if (enable_shortcut) {
+			showHide();
+		}
+	});
+
+	hm_show_hide_mini = new UGlobalHotkeys();
+	hm_show_hide_mini->registerHotkey(hotkey_show_hide_mini);
+	connect(hm_show_hide_mini, &UGlobalHotkeys::activated, [&](size_t id) {
+		if (enable_shortcut) {
+			showHideMini();
+		}
+	});
+
 
 	// 文字認識スレッド開始
 	thread.start();
@@ -105,20 +166,25 @@ void MouseOverDictionary::ReadSettings()
 	mini_window_text_font_size = settings.value("MiniWindowText", 10).toInt();
 	settings.endGroup();
 
-	// ウィンドウの設定
-	settings.beginGroup("Window");
-	// MainWindowWidth
-	// MainWindowHeight
-	// MainWindowHistoryWidth
-	// MiniWindowWidth
-	// MiniWindowHeight
-	// MiniWindowPositionX
-	// MiniWindowPositionY
 
-	// ShowMiniWindow
-	// ShowHistory
-	// AlwaysOnTop
+	// キーボードショートカットの設定
+	settings.beginGroup("Shortcut");
+	enable_shortcut = settings.value("Enable", true).toBool();
+	hotkey_show_hide_both = settings.value("ShowHideBothWindow", "Ctrl+Alt+Z").toString();
+	hotkey_show_hide_mini = settings.value("ShowHideMiniWindow", "Ctrl+Alt+X").toString();
 	settings.endGroup();
+
+
+	// 各ウィンドウの設定
+	settings.beginGroup("Window");
+	main_window_opacity = settings.value("MainWindowOpacity", 0.8).toDouble();
+	mini_window_opacity = settings.value("MiniWindowOpacity", 0.8).toDouble();
+	mini_window_width   = settings.value("MiniWindowWidth", 250).toInt();
+	mini_window_height  = settings.value("MiniWindowHeight", 70).toInt();
+	mini_window_pos_x   = settings.value("MiniWindowPositionX",  0).toInt(); // マウス追従ウィンドウがカーソルに被るとクリックができなくなるので注意
+	mini_window_pos_y   = settings.value("MiniWindowPositionY", 25).toInt();
+	settings.endGroup();
+
 
 	// 文字認識の設定
 	settings.beginGroup("OCR");
@@ -130,6 +196,18 @@ void MouseOverDictionary::ReadSettings()
 	// 文字認識の精度を上げるためにキャプチャ後の画像を拡大する倍率、100→等倍、150→1.5倍、範囲：100～200
 	ocr_scale = settings.value("CaptureScale", 130).toInt();
 	settings.endGroup();
+
+
+	// 前回終了時のウィンドウの情報 // saveGeometry()、restoreGeometry()という機能もあるらしいけど、とりあえずこれで
+	settings.beginGroup("PreviousState");
+	main_window_width  = settings.value("MainWindowWidth", 350).toInt();
+	main_window_height = settings.value("MainWindowHeight", 300).toInt();
+	main_window_pos_x  = settings.value("MainWindowPositionX", (screen_width - main_window_width) / 2).toInt(); // デフォルトは画面の中央に
+	main_window_pos_y  = settings.value("MainWindowPositionY", (screen_height - main_window_height) / 2).toInt();
+	mini_show    = settings.value("ShowMiniWindow", false).toBool();
+	history_show = settings.value("ShowHistory", false).toBool();
+	stay_top     = settings.value("AlwaysOnTop", true).toBool();
+	// MainWindowHistoryWidth
 
 
 	// 不正な値が指定されてしまわないように、色コードをチェック（要検討）
@@ -148,11 +226,17 @@ void MouseOverDictionary::ReadSettings()
 	main_window_mark_font_size = std::clamp(main_window_mark_font_size, 3, 32);
 	mini_window_word_font_size = std::clamp(mini_window_word_font_size, 3, 32);
 	mini_window_text_font_size = std::clamp(mini_window_text_font_size, 3, 32);
+	main_window_opacity = std::clamp(main_window_opacity, 0.0, 1.0);
+	mini_window_opacity = std::clamp(mini_window_opacity, 0.0, 1.0);
 	ocr_scale       = std::clamp(ocr_scale,     100, 200);
 	ocr_area_left   = std::clamp(ocr_area_left,   1, 500);
 	ocr_area_right  = std::clamp(ocr_area_right,  1, 500);
 	ocr_area_top    = std::clamp(ocr_area_top,    1, 500);
 	ocr_area_bottom = std::clamp(ocr_area_bottom, 1, 500);
+	if (main_window_width < 0) mini_window_width = 0;
+	if (main_window_height < 0) mini_window_height = 0;
+	if (mini_window_width < 0) mini_window_width = 0;
+	if (mini_window_height < 0) mini_window_height = 0;
 
 	// 各パラメータを文字認識スレッドにセット
 	thread.setMainFontColor(main_window_word_font_color, main_window_text_font_color, main_window_mark_font_color, main_window_background_color);
@@ -187,18 +271,19 @@ void MouseOverDictionary::WriteSettings()
 	settings.setValue("MiniWindowText", mini_window_text_font_size);
 	settings.endGroup();
 
-	settings.beginGroup("Window");
-	// MainWindowWidth
-	// MainWindowHeight
-	// MainWindowHistoryWidth
-	// MiniWindowWidth
-	// MiniWindowHeight
-	// MiniWindowPositionX
-	// MiniWindowPositionY
+	settings.beginGroup("Shortcut");
+	settings.setValue("Enable", enable_shortcut);
+	settings.setValue("ShowHideBothWindow", hotkey_show_hide_both);
+	settings.setValue("ShowHideMiniWindow", hotkey_show_hide_mini);
+	settings.endGroup();
 
-	// ShowMiniWindow
-	// ShowHistory
-	// AlwaysOnTop
+	settings.beginGroup("Window");
+	settings.setValue("MainWindowOpacity", main_window_opacity);
+	settings.setValue("MiniWindowOpacity", mini_window_opacity);
+	settings.setValue("MiniWindowWidth", mini_window_width);
+	settings.setValue("MiniWindowHeight", mini_window_height);
+	settings.setValue("MiniWindowPositionX", mini_window_pos_x);
+	settings.setValue("MiniWindowPositionY", mini_window_pos_y);
 	settings.endGroup();
 
 	settings.beginGroup("OCR");
@@ -207,6 +292,18 @@ void MouseOverDictionary::WriteSettings()
 	settings.setValue("CaptureAreaTop", ocr_area_top);
 	settings.setValue("CaptureAreaBottom", ocr_area_bottom);
 	settings.setValue("CaptureScale", ocr_scale);
+	settings.endGroup();
+
+	// 前回終了時のウィンドウの情報
+	settings.beginGroup("PreviousState");
+	settings.setValue("MainWindowWidth", main_window_width);
+	settings.setValue("MainWindowHeight", main_window_height);
+	settings.setValue("MainWindowPositionX", main_window_pos_x);
+	settings.setValue("MainWindowPositionY", main_window_pos_y);
+	settings.setValue("ShowMiniWindow", mini_show);
+	settings.setValue("ShowHistory", history_show);
+	settings.setValue("AlwaysOnTop", stay_top);
+	// MainWindowHistoryWidth
 	settings.endGroup();
 
 }
@@ -285,8 +382,13 @@ void MouseOverDictionary::setReady(bool ready)
 
 void MouseOverDictionary::resizeEvent(QResizeEvent *event)
 {
+	// ウィンドウ内のサイズ
+	main_window_width = this->geometry().width();
+	main_window_height = this->geometry().height();
+
+	// メインウィンドウ内では文字認識を走らせないようにするために、現在サイズを指定
 	if (thread_ready) {
-		// https://doc.qt.io/archives/4.3/geometry.html
+		// ウィンドウの枠なども含めたサイズを指定 https://doc.qt.io/archives/4.3/geometry.html
 		thread.setWindowSize(this->frameGeometry().width(), this->frameGeometry().height());
 	}
 	QWidget::resizeEvent(event);
@@ -294,8 +396,12 @@ void MouseOverDictionary::resizeEvent(QResizeEvent *event)
 
 void MouseOverDictionary::moveEvent(QMoveEvent *event)
 {
+	main_window_pos_x = this->pos().x();
+	main_window_pos_y = this->pos().y();
+
+	// メインウィンドウ内では文字認識を走らせないようにするために、現在位置を指定
 	if (thread_ready) {
-		thread.setWindowPos(this->pos().x(), this->pos().y());
+		thread.setWindowPos(main_window_pos_x, main_window_pos_y);
 	}
 	QWidget::moveEvent(event);
 }
@@ -303,8 +409,55 @@ void MouseOverDictionary::moveEvent(QMoveEvent *event)
 void MouseOverDictionary::closeEvent(QCloseEvent *event)
 {
 	delete mini_window;
+	delete hm_show_hide_both;
+	delete hm_show_hide_mini;
 	QWidget::closeEvent(event);
 }
+
+void MouseOverDictionary::changeEvent(QEvent * event)
+{
+	QMainWindow::changeEvent(event);
+	if (event->type() == QEvent::WindowStateChange)
+	{
+
+		// メインウィンドウ最小化時に文字読み取りをオフにする
+		if (windowState() == Qt::WindowMinimized)
+		{
+			thread.disableOcr();
+			if (mini_show == true) {
+				mini_window->hide();
+			}
+
+		}
+		else if (windowState() == Qt::WindowNoState)
+		{
+			thread.enableOcr();
+			if (mini_show == true) {
+				mini_window->show();
+			}
+		}
+	}
+}
+
+//void MouseOverDictionary::hideEvent(QHideEvent * event)
+//{
+//	thread.disableOcr();
+//	if (mini_show == true) {
+//		mini_window->hide();
+//	}
+//
+//	QWidget::hideEvent(event);
+//}
+//
+//void MouseOverDictionary::showEvent(QShowEvent * event)
+//{
+//	thread.enableOcr();
+//	if (mini_show == true) {
+//		mini_window->show();
+//	}
+//
+//	QWidget::showEvent(event);
+//}
 
 void MouseOverDictionary::updateHistory(QString word)
 {
@@ -373,4 +526,41 @@ void MouseOverDictionary::setFromClipboard()
 			ui.lineEdit->setText(clippboard_text);
 		}
 	}
+}
+
+void MouseOverDictionary::showHide()
+{
+	if (windowState() == Qt::WindowMinimized)
+	{
+		this->setWindowState(Qt::WindowNoState);
+	}
+	else if (windowState() == Qt::WindowNoState)
+	{
+		this->setWindowState(Qt::WindowMinimized);
+	}
+
+	// メインウィンドウを最小化する動きが少しうっとおしいので、show()、hide()にする
+	//   ただしこの方法だと、ショートカット以外に再表示させる方法がないので、誤操作が心配かも（最小化ならタスクバーから戻せる）
+	//   → タスクマネージャーからも見えなくなる挙動が怖いので、やっぱり最小化に戻す。タスクトレイ常駐を実装したら戻すかも
+	//if (this->isVisible()) {
+	//	this->hide();
+	//}
+	//else {
+	//	this->show();
+	//}
+}
+
+void MouseOverDictionary::showHideMini()
+{
+	// そのうち「アクション」などで整理
+	if (mini_show == false) {
+		mini_window->show();
+		ui.toolButton->setIcon(QIcon(":/MouseOverDictionary/Resources/chat-4-line.png"));
+	}
+	else {
+		mini_window->hide();
+		ui.toolButton->setIcon(QIcon(":/MouseOverDictionary/Resources/chat-off-line.png"));
+	}
+
+	mini_show = !mini_show;
 }

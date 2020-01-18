@@ -4,6 +4,7 @@ Thread::Thread(QObject *parent)
 	: QThread(parent)
 {
 	stopped = false;
+	enable_ocr = true;
 }
 
 Thread::~Thread()
@@ -71,6 +72,12 @@ void Thread::run()
 
 	while (!stopped)
 	{
+		// 文字認識機能無効化状態なら文字認識は実行しない
+		if (enable_ocr == false) {
+			Sleep(1); // コンテキストスイッチを発生させてCPU使用率を下げる(Issue#2)
+			continue;
+		}
+
 		POINT po;
 		GetCursorPos(&po);
 
@@ -524,6 +531,20 @@ void Thread::stop()
 {
 	mutex.lock();
 	stopped = true;
+	mutex.unlock();
+}
+
+void Thread::enableOcr()
+{
+	mutex.lock();
+	enable_ocr = true;
+	mutex.unlock();
+}
+
+void Thread::disableOcr()
+{
+	mutex.lock();
+	enable_ocr = false;
 	mutex.unlock();
 }
 

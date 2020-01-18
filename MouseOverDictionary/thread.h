@@ -24,6 +24,9 @@ public:
 
 	void stop();
 
+	void enableOcr();
+	void disableOcr();
+
 	void setWindowPos(int x, int y);
 	void setWindowSize(int w, int h);
 	void setOcrScale(int ocr_scale);
@@ -49,6 +52,8 @@ protected:
 private:
 	QMutex mutex;
 	bool stopped;
+
+	bool enable_ocr;
 
 	ScreenOCR ocr;
 	Dictionary dict;

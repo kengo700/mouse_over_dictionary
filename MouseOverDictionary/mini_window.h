@@ -12,6 +12,7 @@ class MiniWindow : public QWidget
 public:
 	MiniWindow(QWidget *parent = Q_NULLPTR);
 	~MiniWindow();
+	void setRelativePos(int x, int y);
 
 public slots:
 	void followCursor();
@@ -19,5 +20,7 @@ public slots:
 	void toggleShow(bool toggle);
 
 private:
+	int relative_pos_x;
+	int relative_pos_y;
 	Ui::MiniWindow ui;
 };
