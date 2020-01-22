@@ -19,7 +19,7 @@
 
 ### インストール
 * 下記からダウンロードして展開
-    * [MouseOverDictionary.ver.0.0.5.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.5/MouseOverDictionary.ver.0.0.5.zip)
+    * [MouseOverDictionary.ver.0.0.6.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.6/MouseOverDictionary.ver.0.0.6.zip)
 
 ### 主な機能
 
