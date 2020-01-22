@@ -46,6 +46,9 @@
     <ClCompile Include="mini_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pause_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mouse_over_dictionary.h">
@@ -57,12 +60,18 @@
     <QtMoc Include="mini_window.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="pause_window.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mouse_over_dictionary.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="mini_window.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="pause_window.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

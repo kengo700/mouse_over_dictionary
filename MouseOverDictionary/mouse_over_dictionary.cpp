@@ -62,6 +62,16 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 	}
 
 
+	// 画面停止ウィンドウ作成
+	//   最小化や最前面設定を独立にしたいので、メインウィンドウの子（new PauseWindow(this);）にはしない
+	//   closeEventで削除する
+	pause_window = new PauseWindow();
+
+	// 画面停止ウィンドウ設定
+	pause_window->setWindowOpacity(pause_window_opacity);
+	pause_window->setStyleSheet(QString::fromStdString("QScrollArea {border: " + std::to_string(pause_window_border_width) + "px solid " + pause_window_border_color + ";}"));
+
+
 	// 検索履歴をダブルクリックで編集できないように設定
 	ui.listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -130,6 +140,13 @@ MouseOverDictionary::MouseOverDictionary(QWidget *parent)
 		}
 	});
 
+	hm_show_hide_pause = new UGlobalHotkeys();
+	hm_show_hide_pause->registerHotkey(hotkey_screen_pause);
+	connect(hm_show_hide_pause, &UGlobalHotkeys::activated, [&](size_t id) {
+		if (enable_shortcut) {
+			showPauseWindow();
+		}
+	});
 
 	// 文字認識スレッド開始
 	thread.start();
@@ -172,17 +189,26 @@ void MouseOverDictionary::ReadSettings()
 	enable_shortcut = settings.value("Enable", true).toBool();
 	hotkey_show_hide_both = settings.value("ShowHideBothWindow", "Ctrl+Alt+Z").toString();
 	hotkey_show_hide_mini = settings.value("ShowHideMiniWindow", "Ctrl+Alt+X").toString();
+	hotkey_screen_pause = settings.value("ScreenPause", "Ctrl+Alt+A").toString();
 	settings.endGroup();
 
 
 	// 各ウィンドウの設定
 	settings.beginGroup("Window");
-	main_window_opacity = settings.value("MainWindowOpacity", 0.8).toDouble();
-	mini_window_opacity = settings.value("MiniWindowOpacity", 0.8).toDouble();
+	main_window_opacity = settings.value("MainWindowOpacity", 0.9).toDouble();
+	mini_window_opacity = settings.value("MiniWindowOpacity", 0.9).toDouble();
 	mini_window_width   = settings.value("MiniWindowWidth", 250).toInt();
 	mini_window_height  = settings.value("MiniWindowHeight", 70).toInt();
 	mini_window_pos_x   = settings.value("MiniWindowPositionX",  0).toInt(); // マウス追従ウィンドウがカーソルに被るとクリックができなくなるので注意
 	mini_window_pos_y   = settings.value("MiniWindowPositionY", 25).toInt();
+	settings.endGroup();
+
+
+	// 画面停止機能の設定
+	settings.beginGroup("ScreenPause");
+	pause_window_border_width = settings.value("BorderThickness", 1).toInt();
+	pause_window_border_color = settings.value("BorderColor", "#ff4500").toString().toStdString();
+	pause_window_opacity = settings.value("Opacity", 0.9).toDouble();
 	settings.endGroup();
 
 
@@ -219,6 +245,7 @@ void MouseOverDictionary::ReadSettings()
 	if (std::regex_match(mini_window_word_font_color , re_color) != 1) mini_window_word_font_color  = "#000088";
 	if (std::regex_match(mini_window_text_font_color , re_color) != 1) mini_window_text_font_color  = "#101010";
 	if (std::regex_match(mini_window_background_color, re_color) != 1) mini_window_background_color = "#ffffff";
+	if (std::regex_match(pause_window_border_color   , re_color) != 1) pause_window_border_color    = "#ff4500";
 
 	// 不正な値が指定されてしまわないように、各パラメータを範囲内に収める（要検討）
 	main_window_word_font_size = std::clamp(main_window_word_font_size, 3, 32);
@@ -226,8 +253,9 @@ void MouseOverDictionary::ReadSettings()
 	main_window_mark_font_size = std::clamp(main_window_mark_font_size, 3, 32);
 	mini_window_word_font_size = std::clamp(mini_window_word_font_size, 3, 32);
 	mini_window_text_font_size = std::clamp(mini_window_text_font_size, 3, 32);
-	main_window_opacity = std::clamp(main_window_opacity, 0.0, 1.0);
-	mini_window_opacity = std::clamp(mini_window_opacity, 0.0, 1.0);
+	main_window_opacity  = std::clamp(main_window_opacity,  0.0, 1.0);
+	mini_window_opacity  = std::clamp(mini_window_opacity,  0.0, 1.0);
+	pause_window_opacity = std::clamp(pause_window_opacity, 0.0, 1.0);
 	ocr_scale       = std::clamp(ocr_scale,     100, 200);
 	ocr_area_left   = std::clamp(ocr_area_left,   1, 500);
 	ocr_area_right  = std::clamp(ocr_area_right,  1, 500);
@@ -237,6 +265,7 @@ void MouseOverDictionary::ReadSettings()
 	if (main_window_height < 0) mini_window_height = 0;
 	if (mini_window_width < 0) mini_window_width = 0;
 	if (mini_window_height < 0) mini_window_height = 0;
+	if (pause_window_border_width < 0) pause_window_border_width = 0;
 
 	// 各パラメータを文字認識スレッドにセット
 	thread.setMainFontColor(main_window_word_font_color, main_window_text_font_color, main_window_mark_font_color, main_window_background_color);
@@ -275,6 +304,7 @@ void MouseOverDictionary::WriteSettings()
 	settings.setValue("Enable", enable_shortcut);
 	settings.setValue("ShowHideBothWindow", hotkey_show_hide_both);
 	settings.setValue("ShowHideMiniWindow", hotkey_show_hide_mini);
+	settings.setValue("ScreenPause", hotkey_screen_pause);
 	settings.endGroup();
 
 	settings.beginGroup("Window");
@@ -284,6 +314,12 @@ void MouseOverDictionary::WriteSettings()
 	settings.setValue("MiniWindowHeight", mini_window_height);
 	settings.setValue("MiniWindowPositionX", mini_window_pos_x);
 	settings.setValue("MiniWindowPositionY", mini_window_pos_y);
+	settings.endGroup();
+
+	settings.beginGroup("ScreenPause");
+	settings.setValue("BorderThickness", pause_window_border_width);
+	settings.setValue("BorderColor", QString::fromStdString(pause_window_border_color));
+	settings.setValue("Opacity", pause_window_opacity);
 	settings.endGroup();
 
 	settings.beginGroup("OCR");
@@ -408,9 +444,12 @@ void MouseOverDictionary::moveEvent(QMoveEvent *event)
 
 void MouseOverDictionary::closeEvent(QCloseEvent *event)
 {
-	delete mini_window;
-	delete hm_show_hide_both;
-	delete hm_show_hide_mini;
+	// delete *** よりも ***->deleteLater() の方が安全らしい  https://stackoverflow.com/questions/39407564/difference-between-hide-close-and-show-in-qt
+	mini_window->deleteLater();
+	pause_window->deleteLater();
+	hm_show_hide_both->deleteLater();
+	hm_show_hide_mini->deleteLater();
+	hm_show_hide_pause->deleteLater();
 	QWidget::closeEvent(event);
 }
 
@@ -563,4 +602,54 @@ void MouseOverDictionary::showHideMini()
 	}
 
 	mini_show = !mini_show;
+}
+
+void MouseOverDictionary::showPauseWindow()
+{
+	if (pause_window->isVisible()) {
+		pause_window->hide();
+	}
+	else {
+
+		// 画面停止ウィンドウ終了後に元のウィンドウをアクティブにするために、現在アクティブなウィンドウを記録
+		//   GetActiveWindow()だと別スレッドは取れないので、GetForegroundWindow()を使う
+		HWND hWnd;
+		hWnd = GetForegroundWindow();
+		pause_window->logActiveWindow(hWnd);
+
+		// スクショに映り込まないように一時的に非表示に
+		if (windowState() != Qt::WindowMinimized) {
+			if (mini_show) {
+				mini_window->hide();
+			}
+			this->hide();
+		}
+
+		// カーソルがあるスクリーンを取得
+		QScreen * screen = QGuiApplication::screenAt(QCursor::pos());
+		if (screen != 0) {
+
+			// 画面停止ウィンドウのScrollAreaの枠の太さだけ内側をスクショ
+			QPixmap screenPixmap = QPixmap();
+			screenPixmap = screen->grabWindow(0, pause_window_border_width, pause_window_border_width);
+			pause_window->setScreenshot(screenPixmap);
+
+			QRect rect = screen->geometry();
+
+			pause_window->show();
+
+			// マウスがある方のスクリーンに移動させる
+			//   なぜかshow()の後じゃないと移動できない　https://stackoverflow.com/questions/3203095/display-window-full-screen-on-secondary-monitor-using-qt
+			pause_window->move(QPoint(rect.x(), rect.y()));
+		}
+
+		// 再表示
+		if (windowState() != Qt::WindowMinimized) {
+			this->show();
+			if (mini_show) {
+				mini_window->show();
+			}
+		}
+	}
+
 }

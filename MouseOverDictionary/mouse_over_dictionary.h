@@ -11,6 +11,7 @@
 
 #include "ui_mouse_over_dictionary.h"
 #include "mini_window.h"
+#include "pause_window.h"
 #include "thread.h"
 #include "UGlobalHotkey\uglobalhotkeys.h"
 
@@ -28,11 +29,13 @@ private:
 
 	Ui::MouseOverDictionaryClass ui;
 	MiniWindow *mini_window;
+	PauseWindow *pause_window;
 	Thread thread;
 	QClipboard *clipboard;
 
 	UGlobalHotkeys *hm_show_hide_both;
 	UGlobalHotkeys *hm_show_hide_mini;
+	UGlobalHotkeys *hm_show_hide_pause;
 
 	bool thread_ready = false;
 
@@ -47,6 +50,7 @@ private:
 	bool enable_shortcut;
 	QString hotkey_show_hide_both;
 	QString hotkey_show_hide_mini;
+	QString hotkey_screen_pause;
 
 	int ocr_scale;
 	int ocr_area_left;
@@ -82,6 +86,10 @@ private:
 	double main_window_opacity;
 	double mini_window_opacity;
 
+	double pause_window_opacity;
+	int pause_window_border_width;
+	std::string pause_window_border_color;
+
 	int screen_width;
 	int screen_height;
 
@@ -97,6 +105,7 @@ public slots:
 	void setFromClipboard();
 	void showHide();
 	void showHideMini();
+	void showPauseWindow();
 
 protected:
 	void resizeEvent(QResizeEvent *event);

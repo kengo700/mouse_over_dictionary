@@ -82,7 +82,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\tesseract\build\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\tesseract\build\x64\include;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -98,6 +98,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mouse_over_dictionary.cpp" />
     <ClCompile Include="mini_window.cpp" />
+    <ClCompile Include="pause_window.cpp" />
     <ClCompile Include="screen_ocr.cpp" />
     <ClCompile Include="thread.cpp" />
   </ItemGroup>
@@ -107,6 +108,7 @@
   <ItemGroup>
     <QtUic Include="mouse_over_dictionary.ui" />
     <QtUic Include="mini_window.ui" />
+    <QtUic Include="pause_window.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="mouse_over_dictionary.qrc" />
@@ -116,6 +118,7 @@
     <ClInclude Include="image.h" />
     <ClInclude Include="inflector.h" />
     <QtMoc Include="mini_window.h" />
+    <QtMoc Include="pause_window.h" />
     <ClInclude Include="screen_ocr.h" />
     <QtMoc Include="thread.h" />
   </ItemGroup>
