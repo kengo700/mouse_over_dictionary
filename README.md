@@ -17,9 +17,10 @@
     
 詳しい使い方は[こちらのページ](https://github.com/kengo700/mouse_over_dictionary/wiki/%E8%A9%B3%E3%81%97%E3%81%84%E4%BD%BF%E3%81%84%E6%96%B9)をご覧ください
 
-### インストール
+### 起動方法
 * 下記からダウンロードして展開
     * [MouseOverDictionary.ver.0.0.6.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.6/MouseOverDictionary.ver.0.0.6.zip)
+* MouseOverDictionary.exeをダブルクリック
 
 ### 主な機能
 
