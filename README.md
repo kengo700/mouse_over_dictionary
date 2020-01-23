@@ -22,6 +22,8 @@
     * [MouseOverDictionary.ver.0.0.6.zip](https://github.com/kengo700/mouse_over_dictionary/releases/download/v0.0.6/MouseOverDictionary.ver.0.0.6.zip)
 * MouseOverDictionary.exeをダブルクリック
 
+![MouseOverDictionaryアイコン](https://github.com/kengo700/mouse_over_dictionary/wiki/images/exe_file.png)
+
 ### 主な機能
 
 * マウスオーバー辞書引き
